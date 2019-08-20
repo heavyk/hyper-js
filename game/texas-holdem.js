@@ -1,4 +1,6 @@
-import EventEmitter from '../../lib/drip/emitter'
+import EventEmitter from '@lib/drip/emitter'
+
+import shuffle from '@lib/game/shuffle-array'
 
 import { rankHandInt } from './rank-hand'
 
@@ -559,14 +561,7 @@ class Game {
                 'AC','KC','QC','JC','TC','9C','8C','7C','6C','5C','4C','3C','2C']
 
     // Shuffle the deck array with Fisher-Yates
-    var i, j, tempi, tempj
-    for (i = 0; i < deck.length; i++) {
-      j = Math.floor(Math.random() * (i + 1))
-      tempi = deck[i]
-      tempj = deck[j]
-      deck[i] = tempj
-      deck[j] = tempi
-    }
+    shuffle(deck)
 
     this.deck.splice.apply(this.deck, [0, this.deck.length].concat(deck))
     // this.deck = deck
