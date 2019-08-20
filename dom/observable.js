@@ -1,6 +1,6 @@
 'use strict'
 
-import { define_prop, define_props, define_value, forEach, remove_every as compactor, error } from '../utils'
+import { define_prop, define_props, define_value, define_getter, forEach, remove_every as compactor, error } from '../utils'
 
 // knicked from: https://github.com/dominictarr/observable/blob/master/index.js
 // mostly unmodified...
@@ -215,15 +215,17 @@ export function compute (observables, compute_fn, do_immediately = false) {
       removables.push(fn((v) => {
         var prev = cur[i]
         cur[i] = v
+        // debugger
         if (prev !== v && is_init === false) observable(compute_fn.apply(null, cur))
-      }, do_immediately))
+      }, is_init))
     } else {
       // items in the observable array can also be literals
       cur[i] = fn
     }
   }
 
-  if (do_immediately) _val = compute_fn.apply(null, cur)
+  // if (do_immediately)
+  _val = compute_fn.apply(null, cur)
   observable._obv = 'value'
   if (DEBUG) observable.gc = () => { compactor(listeners); return listeners }
   if (DEBUG) define_prop(observable, 'listeners', { get: observable.gc }) // only on DEBUG builds, is this is accessible.
