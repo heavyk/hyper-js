@@ -1,32 +1,33 @@
-import MixinEmitter from '../drip/MixinEmitter'
-import { value, obv_obj, observable_property } from './observable'
-import { define_prop, define_getter } from '../utils'
-import { new_ctx } from './hyper-ctx'
-import isEqual from '../isEqual'
-import invoke from '../lodash/invoke'
-import set from '../lodash/set'
+import MixinEmitter from '@lib/drip/MixinEmitter'
+import { value, obv_obj, observable_property } from '@lib/dom/observable'
+import { define_prop, define_getter } from '@lib/utils'
+import { new_ctx } from '@lib/dom/hyper-ctx'
+import isEqual from '@lib/isEqual'
+// import invoke from '@lib/lodash/invoke'
+// import set from '@lib/lodash/set'
 
 export class ObservableArray extends MixinEmitter(Array) {
   // this is so all derived objects are of type Array, instead of ObservableArray
   static get [Symbol.species]() { return Array }
-  constructor (...v) {
-    super(...v)
+  constructor (array) {
+    super()
     this.observable = 'array'
-    if (this._o_length) this._o_length(this.length)
-    define_prop(this, 'obv_len', define_getter(() => this._o_length || (this._o_length = value(this.length))))
+    if (this._obv_len) this._obv_len(this.length)
+    define_prop(this, 'obv_len', define_getter(() => this._obv_len || (this._obv_len = value(this.length))))
+    if (Array.isArray(array) && array.length) super.push(...array)
   }
 
   pop () {
     if (!this.length) return
     this.emit('change', { type: 'pop' })
-    if (this._o_length) this._o_length(this.length - 1)
+    if (this._obv_len) this._obv_len(this.length - 1)
     return super.pop()
   }
 
   push (...items) {
     if (!items.length) return this.length
     this.emit('change', { type: 'push', values: items })
-    if (this._o_length) this._o_length(this.length + items.length)
+    if (this._obv_len) this._obv_len(this.length + items.length)
     return super.push(...items)
   }
 
@@ -39,7 +40,7 @@ export class ObservableArray extends MixinEmitter(Array) {
   shift () {
     if (!this.length) return
     this.emit('change', { type: 'shift' })
-    if (this._o_length) this._o_length(this.length - 1)
+    if (this._obv_len) this._obv_len(this.length - 1)
     return super.shift()
   }
 
@@ -50,13 +51,9 @@ export class ObservableArray extends MixinEmitter(Array) {
   }
 
   sort (compare) {
+    // implementation of selection sort
+    // (it's more compares, but the fewest number of swaps, which is better for dom performance)
     if (this.length <= 1) return this
-    // the slowest sort method, however yields the least number of swaps
-    // TODO: implement quiksort
-    return this.selectionsort(compare)
-  }
-
-  selectionsort (compare) {
     var i = 0, j, k, a = this, l = a.length
     for (; i < l; i++) {
       // smallest index val
@@ -74,121 +71,10 @@ export class ObservableArray extends MixinEmitter(Array) {
     return this
   }
 
-  quiksort (comparefn) {
-    throw new Error('not working at all... needs some swap function improvements')
-    var InsertionSort = (a, from, to) => {
-      for (var i = from + 1; i < to; i++) {
-        var element = a[i]
-        for (var j = i - 1; j >= from; j--) {
-          var tmp = a[j]
-          var order = comparefn(tmp, element)
-          if (order > 0) {
-            this.emit('change', {type: 'swap', from: j, to: j + 1 })
-            a[j + 1] = tmp
-          } else {
-            break
-          }
-        }
-        this.emit('change', {type: 'swap', from: i, to: j + 1 })
-        a[j + 1] = element
-      }
-    }
-
-    var QuickSort = (a, from, to) => {
-      var third_index = 0
-      while (true) {
-        // Insertion sort is faster for short arrays.
-        if (to - from <= 4) {
-          InsertionSort(a, from, to)
-          return
-        }
-
-        third_index = from + ((to - from) >> 1)
-
-        // Find a pivot as the median of first, last and middle element.
-        var v0 = a[from]
-        var v1 = a[to - 1]
-        var v2 = a[third_index]
-        var c01 = comparefn(v0, v1)
-        if (c01 > 0) {
-          // v1 < v0, so swap them.
-          this.emit('change', {type: 'swap', from: from, to: to - 1 })
-          var tmp = v0
-          v0 = v1
-          v1 = tmp
-        } // v0 <= v1.
-        var c02 = comparefn(v0, v2)
-        if (c02 >= 0) {
-          // v2 <= v0 <= v1.
-          this.emit('change', {type: 'swap', from: from, to: to - 1 })
-          var tmp = v0
-          v0 = v2
-          v2 = v1
-          v1 = tmp
-        } else {
-          // v0 <= v1 && v0 < v2
-          var c12 = comparefn(v1, v2)
-          if (c12 > 0) {
-            // v0 <= v2 < v1
-            var tmp = v1
-            v1 = v2
-            v2 = tmp
-          }
-        }
-        // v0 <= v1 <= v2
-        a[from] = v0
-        a[to - 1] = v2
-        var pivot = v1
-        var low_end = from + 1 // Upper bound of elements lower than pivot.
-        var high_start = to - 1 // Lower bound of elements greater than pivot.
-        a[third_index] = a[low_end]
-        a[low_end] = pivot
-
-        // From low_end to i are elements equal to pivot.
-        // From i to high_start are elements that haven't been compared yet.
-        partition: for (var i = low_end + 1; i < high_start; i++) {
-          var element = a[i]
-          var order = comparefn(element, pivot)
-          if (order < 0) {
-            a[i] = a[low_end]
-            a[low_end] = element
-            low_end++
-          } else if (order > 0) {
-            do {
-              high_start--
-              if (high_start == i) break partition
-              var top_elem = a[high_start]
-              order = comparefn(top_elem, pivot)
-            } while (order > 0)
-            a[i] = a[high_start]
-            a[high_start] = element
-            if (order < 0) {
-              element = a[i]
-              a[i] = a[low_end]
-              a[low_end] = element
-              low_end++
-            }
-          }
-        }
-        if (to - high_start < low_end - from) {
-          QuickSort(a, high_start, to)
-          to = low_end
-        } else {
-          QuickSort(a, from, low_end)
-          from = high_start
-        }
-      }
-    }
-
-    // start it off
-    QuickSort(this, 0, this.length)
-    return this
-  }
-
   empty () {
     if (this.length > 0) {
       this.emit('change', { type: 'empty' })
-      if (this._o_length) this._o_length(0)
+      if (this._obv_len) this._obv_len(0)
       this.length = 0
     }
     return this
@@ -209,7 +95,7 @@ export class ObservableArray extends MixinEmitter(Array) {
 
   insert (idx, val) {
     this.emit('change', { type: 'insert', val, idx })
-    if (this._o_length) this._o_length(this.length + 1)
+    if (this._obv_len) this._obv_len(this.length + 1)
     super.splice(idx, 0, val)
     return this
   }
@@ -221,46 +107,47 @@ export class ObservableArray extends MixinEmitter(Array) {
       else return this
     }
     this.emit('change', { type: 'remove', idx })
-    if (this._o_length) this._o_length(this.length - 1)
+    if (this._obv_len) this._obv_len(this.length - 1)
     super.splice(idx, 1)
     return this
   }
 
   splice (idx, remove, ...add) {
-    // TODO: fix this?? arguments?!?!?
-    var l = arguments.length
-    if (!l || (l <= 2 && (+idx >= this.length || +remove <= 0))) return []
+    if (idx === undefined || (remove !== undefined && (+idx >= this.length || +remove <= 0))) return []
     this.emit('change', { type: 'splice', idx, remove, add })
-    if (this._o_length) this._o_length(this.length + add.length - remove)
+    if (this._obv_len) this._obv_len(this.length + add.length - remove)
     return super.splice(idx, remove, ...add)
   }
 
   unshift (...items) {
     if (!items.length) return this.length
     this.emit('change', { type: 'unshift', values: items })
-    if (this._o_length) this._o_length(this.length + items.length)
+    if (this._obv_len) this._obv_len(this.length + items.length)
     return super.unshift(...items)
   }
 
   set (idx, val) {
     idx = idx >>> 0
-    // if (idx >= this.length) debugger // what should be done for sparse arrays?
+    // DEBUG && if (idx >= this.length) debugger // what should be done for sparse arrays?
     if (isEqual(this[idx], val)) return
     this.emit('change', { type: 'set', idx, val })
     this[idx] = val
     return this
   }
 
-  setPath (idx, path, value) {
-    var obj = this[idx]
-    // in case it's an observable, no need to emit the event
-    if (obj.observable === 'object') invoke(obj, path, value)
-    else {
-      set(obj, path, value)
-      this.emit('change', { type: 'set', idx, val: obj })
-    }
-    return obj
-  }
+  // @Optimise: move this out to a separate file, so that
+  //            lodash/set and lodash/invoke dependencies aren't pulled in.
+  //            (it was only used once in a project from a while ago)
+  // setPath (idx, path, value) {
+  //   var obj = this[idx]
+  //   // in case it's an observable, no need to emit the event
+  //   if (obj.observable === 'object') invoke(obj, path, value)
+  //   else {
+  //     set(obj, path, value)
+  //     this.emit('change', { type: 'set', idx, val: obj })
+  //   }
+  //   return obj
+  // }
 }
 
 // this function is to replicate changes made to one obv arr to another one(s)
@@ -330,9 +217,9 @@ export class RenderingArray extends ObservableArray {
     this.fn = typeof data === 'function' ? (fn = data) : fn
     let k, fl = this.fl = fn.length
     this.G = G
-    this.d = data instanceof ObservableArray ? data : (data = new ObservableArray)
+    this.d = data instanceof ObservableArray ? data : (data = new ObservableArray(Array.isArray(data) ? data : []))
     // this should have cleanupFuncs in the context (which adds h/s cleanup to the list when it makes the context)
-    G.h.cleanupFuncs.push(() => { this.cleanup() })
+    G.cleanupFuncs.push(() => { this.cleanup() })
 
     // where we store the id/data which gets passed to the rendering function
     if (fl >= 1) this._d = []
@@ -480,7 +367,7 @@ export class RenderingArray extends ObservableArray {
         super.push(..._d)
       }
 
-      if (this._o_length) this._o_length(len)
+      if (this._obv_len) this._obv_len(len)
       this.d.off('change', onchange)
       this.d = data
       define_prop(this, 'obv_len', define_getter(() => this.d.obv_len))
