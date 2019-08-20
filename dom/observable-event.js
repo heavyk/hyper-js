@@ -155,22 +155,22 @@ export function do_press (el, obv, pressed = true, normal = false) {
   )
 }
 
-export function observe (e, observe_obj) {
+export function observe (el, observe_obj) {
   var s, cleanupFuncs = this
   for (s in observe_obj) ((s, v) => {
     // observable
     switch (s) {
       case 'input':
-        cleanupFuncs.push(attribute(e, observe_obj[s+'.attr'], observe_obj[s+'.on'])(v))
+        cleanupFuncs.push(attribute(el, observe_obj[s+'.attr'], observe_obj[s+'.on'])(v))
         break
       case 'hover':
-        cleanupFuncs.push(hover(e)(v))
+        cleanupFuncs.push(hover(el)(v))
         break
       case 'focus':
-        cleanupFuncs.push(focus(e)(v))
+        cleanupFuncs.push(focus(el)(v))
         break
       case 'select_label':
-        s = select(e, 'label')
+        s = select(el, 'label')
         cleanupFuncs.push(
           is_obv(v)
             ? bind2(s, v)
@@ -179,7 +179,7 @@ export function observe (e, observe_obj) {
         break
       case 'select': // default setter: by value
       case 'select_value':
-        s = select(e)
+        s = select(el)
         cleanupFuncs.push(
           is_obv(v)
             ? bind2(s, v)
@@ -191,8 +191,8 @@ export function observe (e, observe_obj) {
         // do_boink.call(cleanupFuncs, e, v)
         // so, it got inlined...
         cleanupFuncs.push(
-          listen(e, 'click', false, () => { is_obv(v) ? v(!v()) : v() }),
-          listen(e, 'touchstart', false, (e) => { prevent_default(e); is_obv(v) ? v(!v()) : v() })
+          listen(el, 'click', false, (ev) => { is_obv(v) ? v(!v()) : v.call(el, ev) }),
+          listen(el, 'touchstart', false, (ev) => { prevent_default(ev); is_obv(v) ? v(!v()) : v.call(el, ev) })
         )
         break
       case 'press':
@@ -200,10 +200,10 @@ export function observe (e, observe_obj) {
         // do_press.call(cleanupFuncs, e, v)
         // so, it got inlined...
         cleanupFuncs.push(
-          listen(e, 'mouseup', false, () => { v(false) }),
-          listen(e, 'mousedown', false, () => { v(true) }),
-          listen(e, 'touchend', false, (e) => { prevent_default(e); v(false) }),
-          listen(e, 'touchstart', false, (e) => { prevent_default(e); v(true) })
+          listen(el, 'mouseup', false, () => { v(false) }),
+          listen(el, 'mousedown', false, () => { v(true) }),
+          listen(el, 'touchend', false, (e) => { prevent_default(e); v(false) }),
+          listen(el, 'touchstart', false, (e) => { prevent_default(e); v(true) })
         )
         break
       default:
@@ -214,7 +214,7 @@ export function observe (e, observe_obj) {
         if (!~s.indexOf('.')) {
           if (typeof v !== 'function') error('observer must be a function')
           // if (s === 'edit') debugger
-          cleanupFuncs.push(obv_event(e, observe_obj[s+'.attr'], (observe_obj[s+'.event'] || s), observe_obj[s+'.valid'])(v))
+          cleanupFuncs.push(obv_event(el, observe_obj[s+'.attr'], (observe_obj[s+'.event'] || s), observe_obj[s+'.valid'])(v))
           // if (s === 'edit') debugger
         }
     }
