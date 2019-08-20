@@ -41,8 +41,15 @@ export function parents (el, name) {
 }
 
 export const random_id = () => Math.random().toString(32).substr(2)
+export const random_idx = (len) => Math.floor(Math.random() * len)
+export const random_int = (max, min = 0) => min + Math.floor(Math.random() * (max - min))
+export const random_int2 = (max, min = 0) => min + Math.floor(Math.sqrt(Math.random() * (max - min) * (max - min)))
+export const sample_array = (array) => {
+  const length = array == null ? 0 : array.length
+  return length ? array[random_idx(length)] : undefined
+}
 
-export const isEmpty = (value) => (!value || typeof value !== 'object') ? !value : !Object.keys(value).length
+export const is_empty = (value) => (!value || typeof value !== 'object') ? !value : !Object.keys(value).length
 export const is_func = (fn) => typeof fn === 'function'
 
 // same as lodash.compact, but does the compaction inline on the same array by resizing it
