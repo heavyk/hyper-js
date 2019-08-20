@@ -402,17 +402,3 @@ export class RenderingArray extends ObservableArray {
 let proto = RenderingArray.prototype
 for (let p of ['swap','move','set','unshift','push','splice','remove','replace','insert','sort','empty','pop','reverse','shift','setPath'])
   proto[p] = function () { return this.d[p].apply(this.d, arguments) }
-
-// ==========================================
-// older, stinkier cacas (delete me)
-// ==========================================
-
-export function isCopy (other) {
-  var i, l = this.length
-  // if (this == null || other == null) throw new TypeError("cannot use null values")
-  if (l !== other.length) return false
-  for (i = 0; i < l; ++i) {
-    if (hasOwnProperty.call(this, i) !== hasOwnProperty.call(other, i) || !isEqual(this[i], other[i])) return false
-  }
-  return true
-}
