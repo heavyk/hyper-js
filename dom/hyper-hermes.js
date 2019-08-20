@@ -145,7 +145,10 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
       }
     }, 0)
   } else {
-    if (k === 'data') {
+    if (k === 'assign' || k === 'extend') {
+      // for(s in v) e[s] = v[s]
+      Object.assign(e, v)
+    } else if (k === 'data') {
       if (typeof v === 'object')
         for(s in v) e.dataset[s] = v[s]
       else error('data property should be passed as an object')
