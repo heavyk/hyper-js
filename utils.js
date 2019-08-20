@@ -85,6 +85,14 @@ export function remove_every (array, value = null) {
   return array
 }
 
+// swaps two elements in an array/object
+export function swap (o, to, from) {
+  var t = o[to]
+  o[to] = o[from]
+  o[from] = t
+}
+
+
 // `cb(obj, array[i])` gets called `array.length` times
 export function obj_apply (obj, array, cb) {
   for (let item of array) cb(obj, item)

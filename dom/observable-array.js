@@ -1,6 +1,6 @@
 import MixinEmitter from '@lib/drip/MixinEmitter'
 import { value, obv_obj, observable_property } from '@lib/dom/observable'
-import { define_prop, define_getter } from '@lib/utils'
+import { swap, define_prop, define_getter } from '@lib/utils'
 import { new_ctx } from '@lib/dom/hyper-ctx'
 import isEqual from '@lib/isEqual'
 // import invoke from '@lib/lodash/invoke'
@@ -205,11 +205,6 @@ export function ObservableArrayApply (oarr, ...arr) {
   })
 }
 
-function swap (o, to, from) {
-  var t = o[to]
-  o[to] = o[from]
-  o[from] = t
-}
 
 export class RenderingArray extends ObservableArray {
   constructor (G, data, fn, opts = { plain: false }) {

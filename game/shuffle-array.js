@@ -1,12 +1,8 @@
-import { random_idx } from '@lib/utils'
+import { random_idx, swap } from '@lib/utils'
 
 function shuffle_array (array) {
-  var i, j, tmp
-  for (i = 0; i < array.length; i++) {
-    j = random_idx(i + 1)
-    tmp = array[i]
-    array[i] = array[j]
-    array[j] = tmp
+  for (var i = 0; i < array.length; i++) {
+    swap(array, i, random_idx(i + 1))
   }
 
   return array
