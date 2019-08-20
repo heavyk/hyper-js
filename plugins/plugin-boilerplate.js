@@ -115,7 +115,7 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
 
   // this is kinda a hacky way to be doing `args` -- really, args should be the `ctx`, with all the obvs and everything
   // it would be cool if this were to return an object, similar to the way new Ractive() does it.
-  args = { C, G, v: value, t: transform, c: compute, m: update_obv, h: G.h, s: G.s }
+  args = { C, G, E, v: value, t: transform, c: compute, m: update_obv, h: G.h, s: G.s }
 
   // next thing is, `onload` should operate exactly the same as `reload`
   // it's just the function that is called which will return a working vdom.
