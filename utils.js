@@ -78,6 +78,20 @@ export function remove_every (array, value = null) {
   return array
 }
 
+// `cb(obj, array[i])` gets called `array.length` times
+export function obj_apply (obj, array, cb) {
+  for (let item of array) cb(obj, item)
+  return obj
+}
+
+// `cb(obj, array[i], array2[j])` gets called `array.length * array2.length` times
+export function obj_apply2 (obj, array, array2, cb) {
+  for (let item of array)
+  for (let item2 of array2)
+    cb(obj, item, item2)
+  return obj
+}
+
 // adapted from: https://gist.github.com/rmariuzzo/8761698
 export function sprintf(format, ...args) {
   var i = 0
