@@ -216,13 +216,12 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
           error('unknown namespace for attribute: ' + k)
         }
       } else {
-        // this won't work for svgs. for example, s('rect', {cx: 5}) will fail, as cx is a read-only property
+        // for svgs you have to setAttribute. for example, s('rect', {cx: 5}) will fail, as cx is a read-only property
         // however, it is worth noting that setAttribute is about 30% slower than setting the property directly
         // https://jsperf.com/setattribute-vs-property-assignment/7
-        // should check memory requirements, but because of the weirdness associated with mixing property and value,
-        // it may be prudent to use property access unless it's a svg (or some other non-standard) context.
-        e[k] = v
-        // e.setAttribute(k, v)
+        // it's likely a not-null check for e.namespaceURI is less overhead than using setAttribute for everyone
+        if (e.namespaceURI) e.setAttribute(k, v)
+        else e[k] = v
       }
     }
   }
