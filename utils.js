@@ -253,6 +253,14 @@ export function optimal_obj (obj) {
   enforcer()
 }
 
+export function merge (...objs) {
+  return Object.assign({}, ...objs)
+}
+
+export function assign (...objs) {
+  return Object.assign(...objs)
+}
+
 // knicked from: https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
 export function mergeDeep(target, ...sources) {
   if (!sources.length) return target
