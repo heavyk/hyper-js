@@ -135,7 +135,9 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
         // however, as mentioned in this article it may be desirable to use property access instead
         // https://stackoverflow.com/questions/22151560/what-is-happening-behind-setattribute-vs-attribute
         // observable (write-only) value
-        if ((s = v()) != null) e[k] = s
+        if ((s = v()) != null)
+          if (e.namespaceURI) e.setAttribute(k, s)
+          else e[k] = s
         cleanupFuncs.push(v((v) => {
           set_attr(e, k, v, cleanupFuncs)
         }))
