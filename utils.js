@@ -253,12 +253,14 @@ export function optimal_obj (obj) {
   enforcer()
 }
 
+// merges all of `objs` into a new object (doesn't modify any of the `objs`)
 export function merge (...objs) {
   return Object.assign({}, ...objs)
 }
 
-export function assign (...objs) {
-  return Object.assign(...objs)
+// merges all of the properties from `obj[1 .. *]` into `obj[0]` and returns `obj[0]`
+export function extend (...obj) {
+  return Object.assign(...obj)
 }
 
 // knicked from: https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
