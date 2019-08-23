@@ -3,7 +3,7 @@ import { mergeDeep, objJSON, random_id } from '../utils'
 import { value, transform, compute } from '../dom/observable'
 // actually, is this needed to be shortcut to `m` directly? I don't think it gets used all that often.
 // actually, any of these extras like this can be imported as needed.
-// import { update_obv } from '../dom/observable-event'
+import { update_obv } from '../dom/observable-event'
 import ResizeSensor from '../dom/resize-sensor'
 
 import { h, s } from '../dom/hyper-hermes'
@@ -119,7 +119,7 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
 
   // this is kinda a hacky way to be doing `args` -- really, args should be the `ctx`, with all the obvs and everything
   // it would be cool if this were to return an object, similar to the way new Ractive() does it.
-  args = { C, G, E, v: value, t: transform, c: compute/*, m: update_obv*/, h: G.h, s: G.s }
+  args = { C, G, E, v: value, t: transform, c: compute, m: update_obv, h: G.h, s: G.s }
 
   // next thing is, `onload` should operate exactly the same as `reload`
   // it's just the function that is called which will return a working vdom.
