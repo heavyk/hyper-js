@@ -125,18 +125,6 @@ export function sprintf(format, ...args) {
   return format.replace(/%[s|d]/g, () => args[i++])
 }
 
-export function parseHash (hash, keys) {
-  try {
-    var parsed = compact(JSON.parse(decodeURIComponent(hash.substr(2))))
-
-    return keys
-      ? pick(parsed, keys)
-      : parsed
-  } catch (e) {
-    return {}
-  }
-}
-
 export function parseJSON (string) {
   try {
     return JSON.parse(string)
@@ -150,44 +138,6 @@ export function objJSON (s) {
     return typeof s === 'string' ? JSON.parse(s) : s
   } catch (e) {}
   return {}
-}
-
-export function joinPaths (...parts) {
-  return parts.join('/').replace(/\/+/g, '/')
-}
-
-export function parseUri (uri) {
-  var parts = uri.match(/^(?:([\w+.-]+):\/\/([^/]+))?([^?#]*)?(\?[^#]*)?(#.*)?/)
-
-  return {
-    protocol: parts[1] || '',
-    host: parts[2] || '',
-    path: parts[3] || '',
-    qs: parts[4] || '',
-    hash: parts[5] || ''
-  }
-}
-
-export function parseQS (qs, keys) {
-  var index = qs.indexOf('?')
-  var parsed = {}
-
-  if (index !== -1) {
-    var pairs = qs.substr(index + 1).split('&')
-    var pair = []
-
-    for (var i = 0, c = pairs.length; i < c; i++) {
-      pair = pairs[i].split('=')
-
-      if ((!isEmpty(pair[1])) && (!isEmpty(parseJSON(pair[1])))) {
-        parsed[decodeURIComponent(pair[0])] = parseJSON(decodeURIComponent(pair[1]))
-      }
-    }
-  }
-
-  return keys
-    ? pick(parsed, keys)
-    : parsed
 }
 
 export function pick (object, keys) {
@@ -208,30 +158,13 @@ export function pick (object, keys) {
   return data
 }
 
+export function isEmpty (value) {
+  return (typeof value.length === 'number' && !value.length) ||
+      (typeof value.size === 'number' && !value.size) ||
+      (typeof value === 'object' && !Object.keys(value).length)
+}
 
 export const stringify = (value) => (!value || typeof value !== 'object') ? value : JSON.stringify(value)
-
-export function stringifyHash (data) {
-  data = compact(data)
-
-  return !isEmpty(data)
-    ? '#!' + encodeURIComponent(stringify(data))
-    : ''
-}
-
-export function stringifyQS (data) {
-  var qs = ''
-
-  for (var x in data) {
-    if (data.hasOwnProperty(x) && !isEmpty(data[x])) {
-      qs += '&' + encodeURIComponent(x) + '=' + encodeURIComponent(stringify(data[x]))
-    }
-  }
-
-  return qs
-    ? '?' + qs.substr(1)
-    : ''
-}
 
 export const camelize = (k) => ~k.indexOf('-') ? k.replace(/-+(.)?/g, (tmp, c) => (c || '').toUpperCase()) : k
 

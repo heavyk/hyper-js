@@ -1,10 +1,8 @@
-import Route from './route.js'
-import { parseUri, scrollTo, joinPaths, parseQS, stringifyQS, stringifyHash, parents } from './utils.js'
+import Route from './route'
+import { scrollTo, parents, assign, isEmpty } from '@lib/utils'
+import { parseUri, scrollTo, parseQS, stringifyQS, stringifyHash, joinPaths } from '@lib/router-utils'
 
 import EventEmitter from './drip/emitter'
-
-import assign from './lodash/assign'
-import isEmpty from './lodash/isEmpty'
 
 export default class Router extends EventEmitter {
   constructor (options, onunhandled, ondispatch) {

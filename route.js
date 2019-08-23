@@ -1,12 +1,7 @@
-import { parseQS, parseHash, parseJSON } from './utils'
-import { pathVars, pathToRegExp, pathToStrictRegExp } from './router-utils'
+import { parseJSON, assign, isEmpty, pick, uniq } from './utils'
+import { pathVars, pathToRegExp, pathToStrictRegExp, parseQS, parseHash } from './router-utils'
 
-import assign from './lodash/assign'
-import isEmpty from './lodash/isEmpty'
-import uniq from './lodash/uniq'
-import flatten from './lodash/flatten'
 import map from './lodash/map'
-import pick from './lodash/pick'
 
 export default class Route {
   constructor (pattern, Handler, data, observe, router) {
