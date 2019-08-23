@@ -447,5 +447,10 @@ Node.prototype.aC = function (el, cleanupFuncs) { return this.appendChild(obvNod
 Node.prototype.rC = function (child) { return this.removeChild(child) }
 // shortcut to remove myself from the dom
 Node.prototype.rm = function () { return this.parentNode.removeChild(this) }
+// shortcut to apply attributes as if they were the second argument to `h('.lala', {these ones}, ...)`
+Node.prototype.apply = function (obj, cleanupFuncs) {
+  for (let k in obj) set_attr(this, k, obj[k], cleanupFuncs)
+  return this
+}
 
 export default h
