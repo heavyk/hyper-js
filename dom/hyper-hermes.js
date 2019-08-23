@@ -16,6 +16,8 @@ import { isNode, txt, comment } from './dom-base'
 
 // add your own (or utilise this to make your code smaller!)
 export var short_attrs = { s: 'style', c: 'className', class: 'className', for: 'htmlFor' }
+// however, when using setAttribute, these need to be reversed
+export var short_attrs_rev = { className: 'class', htmlFor: 'for' }
 
 // can be used to save bytes:
 // h(1,{value:11})
@@ -219,7 +221,7 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
         // however, it is worth noting that setAttribute is about 30% slower than setting the property directly
         // https://jsperf.com/setattribute-vs-property-assignment/7
         // it's likely a not-null check for e.namespaceURI is less overhead than using setAttribute for everyone
-        if (e.namespaceURI) e.setAttribute(k, v)
+        if (e.namespaceURI) e.setAttribute(short_attrs_rev[k] || k, v)
         else e[k] = v
       }
     }
