@@ -85,6 +85,18 @@ export function remove_every (array, value = null) {
   return array
 }
 
+// lightweight version of flatten which only flattens 1 level deep.
+export function flatten (array) {
+  let res = []
+  for (let v of array) Array.isArray(v) ? res.push(...v) : res.push(v)
+  return res
+}
+
+// unique array values using Set.
+export function uniq (array) {
+  return Array.from(new Set(array).values())
+}
+
 // swaps two elements in an array/object
 export function swap (o, to, from) {
   var t = o[to]
