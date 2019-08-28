@@ -38,7 +38,7 @@ export var short_attrs_rev = { className: 'class', htmlFor: 'for' }
 // however this does:
 // h(2)
 // when common_tags = ['div','input','div.lala']
-export var common_tags = []
+export var common_tags = ['div']
 
 function context (createElement) {
   var cleanupFuncs = []
@@ -66,7 +66,9 @@ function context (createElement) {
         }
       }
 
-      if (!e && typeof l === 'number' && l < common_tags.length) e = parseSelector(common_tags[l])
+      if (!e && typeof l === 'number' && l < common_tags.length)
+        // we overwrite 'l', so it does not try and add a text node of its number to the element
+        l = parseSelector(common_tags[l])
 
       if (l != null)
       if (typeof l === 'string') {
