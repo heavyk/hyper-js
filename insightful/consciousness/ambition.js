@@ -1,56 +1,53 @@
-'use strict'
-// var inherits = require('util').inherits
+
 // var Conductor = require('../conductor')
 // var daFunk = require('da-funk')
 var slice = [].slice
 
-// import EventEmitter from '../../drip/emitter'
-import EventEmitter from '../../drip/enhanced'
+// import EventEmitter from '@lib/drip/emitter'
+import EventEmitter from '@lib/drip/enhanced'
 
-import assign from '../../lodash/assign'
+// import { mergeDeep } from '@lib/utils'
+import { extend } from '@lib/utils'
 
 class Ambition extends EventEmitter {
-  constructor (topic, options) {
+  constructor (id, options) {
     super({delimeter: '/'})
     var self = this
     var type, args1
 
 
     // if (typeof options === 'object') { daFunk.extend(this, options) }
-    if (typeof options === 'object') { assign(this, options) }
-    if (self.insightQue === void 9) { self.insightQue = [] }
-    // if (self.namespace === void 9) { self.namespace = name }
-    if (self.states === void 9) { self.states = {} }
-    if (self.startingState === void 9) { self.startingState = 'unsituated' }
+    // if (typeof options === 'object') { mergeDeep(this, options) }
+    if (typeof options === 'object') { extend(this, options) }
+    if (self.insightQue === undefined) { self.insightQue = [] }
+    // if (self.namespace === undefined) { self.namespace = name }
+    if (self.states === undefined) { self.states = {} }
+    if (self.startingState === undefined) { self.startingState = 'unsituated' }
     if (typeof self.eventListeners === 'object') {
       for (var i in self.eventListeners) {
         self.on(i, self.eventListeners[i])
       }
     }
 
-    // self.dialog = archaicDialoger.get(topic)
-    // self._debug = function () {
-    //   return self.dialog._debug.bind(self.dialog)
-    // }
-    self.debug = require('debug')('ambition:' + (topic || (topic = Math.random().toString(32).substr(2))))
-    self._debug = require('debug')('ambition:fsm:' + (topic || Math.random().toString(32).substr(2)))
+    if (DEBUG) self.debug = require('debug')('ambition:' + (id || (id = Math.random().toString(32).substr(2))))
+    if (DEBUG) self._debug = require('debug')('ambition:fsm:' + (id || Math.random().toString(32).substr(2)))
 
-    var init = function () {
+    var begin = function () {
       self.emit('created')
       if (!self.state && self.startingState !== false) {
-        self._debug('starting-state: ' + self.startingState)
-        self.now(self.startingState, topic, options)
-      } else {
-        self._debug('waiting to transition to %s', self.startingState)
+        DEBUG && self._debug('starting-state: ' + self.startingState)
+        self.now(self.startingState, id, options)
+      // } else {
+      //   DEBUG && self._debug('waiting to transition to %s', self.startingState)
       }
     }
 
-    if ((type = typeof this.pregage) !== 'undefined') {
+    if ((type = typeof this.begin) !== 'undefined') {
       args1 = slice.call(arguments, 1)
       if (type === 'function') {
-        self._resolve(self.pregage.apply(self, args1), init)
-      } else self._resolve(type, init)
-    } else init.apply(this, arguments)
+        self._resolve(self.begin.apply(self, args1), begin)
+      } else self._resolve(type, begin)
+    } else begin.apply(this, arguments)
   }
 
   // emerge should contain a history item
@@ -64,7 +61,7 @@ class Ambition extends EventEmitter {
   // this should give our progams a new sense of progress and improvement
   // emergence, if you will :)
   emerge (cb) {
-    this._debug('emerge... %s', this._emerged)
+    DEBUG && this._debug('emerge... %s', this._emerged)
     if (typeof cb === 'function') {
       if (this._emerged) {
         cb.call(this)
@@ -79,20 +76,10 @@ class Ambition extends EventEmitter {
     return this._emerged
   }
 
-  // emit (event) {
-  //   if (event === '55d0c2bb351ec3730040fe93.55aeb6cfca6f735e002aac24') debugger
-  //   return super.emit.apply(this, arguments)
-  // }
-
-  // on (event) {
-  //   if (event === '55d0c2bb351ec3730040fe93.55aeb6cfca6f735e002aac24') debugger
-  //   return super.on.apply(this, arguments)
-  // }
-
   reset () {
-    this.state = void 9
-    if (typeof this.pregage === 'function') {
-      this.pregage.call(this)
+    this.state = undefined
+    if (typeof this.start === 'function') {
+      this.start.call(this)
     }
     if (this.startingState) {
       return this.soon(this.startingState)
@@ -113,7 +100,7 @@ class Ambition extends EventEmitter {
     var self = this
     var args = slice.call(arguments, 0)
     var responded = 0
-    this._debug('response: ' + cmd + ' in ' + this.state)
+    DEBUG && this._debug('response: ' + cmd + ' in ' + this.state)
     if (!this.exitStageLeft && (state = this.state)) {
       states = this.states
       response = cmd
@@ -128,7 +115,7 @@ class Ambition extends EventEmitter {
         }
         self.emit.call(self, 'responding', emitObj)
         ret = fn.apply(self, response === '*' ? args : args1)
-        self._debug('response(%s) called:ret (%s)', response, typeof ret === 'object'
+        DEBUG && self._debug('response(%s) called:ret (%s)', response, typeof ret === 'object'
           ? 'object'
           : typeof ret === 'string' && ret.length > 100 ? ret.substr(0, 97) + ' ...' : ret)
         emitObj.ret = ret
@@ -145,7 +132,7 @@ class Ambition extends EventEmitter {
       if (typeof (fn = states[state]['*']) === 'function') {
         do_response(fn, '*', '/states/' + state + '/' + response)
       }
-      this._debug('response ' + response)
+      DEBUG && this._debug('response ' + response)
       if ((p = this.cmds) && typeof (fn = p[response]) === 'function') {
         do_response(fn, response, '/cmds/' + response)
       }
@@ -154,7 +141,7 @@ class Ambition extends EventEmitter {
       }
     }
     if (responded === 0) {
-      this._debug("response: '" + cmd + "' next now (in state:" + this.state)
+      DEBUG && this._debug("response: '" + cmd + "' next now (in state:" + this.state)
       obj = {
         type: 'next-now',
         cmd: cmd,
@@ -206,7 +193,7 @@ class Ambition extends EventEmitter {
 
   nowPrepared (lastState, nextState, prepared, args) {
     var self = this
-    self._debug('post-now %s -> %s', lastState, nextState)
+    DEBUG && self._debug('post-now %s -> %s', lastState, nextState)
     self.emit.apply(self, ['state:' + nextState].concat(prepared).concat(args))
     self.emit.call(self, 'now', {
       from: lastState,
@@ -219,7 +206,7 @@ class Ambition extends EventEmitter {
       self.followThrough.call(self, 'deferred')
     }
     if (!self._emerged && nextState[0] === '/') {
-      self._debug('initialzed! in %s', nextState)
+      DEBUG && self._debug('initialzed! in %s', nextState)
       self.followThrough.call(self, 'emerge')
       self._emerged = nextState
     }
@@ -241,7 +228,7 @@ class Ambition extends EventEmitter {
     if (self.inTransition) {
       return self.soon.apply(self, arguments)
     }
-    self._debug('[%s]{now}  -> %s', self.state, nextState)
+    DEBUG && self._debug('[%s]{now}  -> %s', self.state, nextState)
     if (!self.exitStageLeft && nextState !== self.state) {
       args1 = slice.call(arguments, 1)
       if (self.states[nextState]) {
@@ -260,21 +247,21 @@ class Ambition extends EventEmitter {
         // many possibilites to be explored ... etc.
         if (self.states[nextState]['>']) {
           // process.nextTick(function () {
-            self._debug('[%s]{>}{:_resolve} %o', nextState, args1)
+            DEBUG && self._debug('[%s]{>}{:_resolve} %o', nextState, args1)
             self._resolve(self.states[nextState]['>'].apply(self, args1), function (prepared) {
-              self._debug('[%s]{>}{_resolve:}', nextState)
+              DEBUG && self._debug('[%s]{>}{_resolve:}', nextState)
               self.nowPrepared.call(self, lastState, nextState, prepared, args1)
             })
           // })
         } else {
-          self.nowPrepared.call(self, lastState, nextState, prepared, args1)
+          self.nowPrepared.call(self, lastState, nextState, [], args1)
         }
         if (self.insightQue.length && self.state[0] === '/') {
           self.followThrough.call(self, 'next-now')
           self.followThrough.call(self, 'deferred')
         }
       } else {
-        self._debug('attempted to now to an invalid state: %s', nextState)
+        DEBUG && self._debug('attempted to now to an invalid state: %s', nextState)
         self.emit.call(self, 'missing-state', {
           from: self.state,
           to: nextState,
@@ -305,7 +292,7 @@ class Ambition extends EventEmitter {
       return item.type === 'next-response'
     }
     var toProcess = this.insightQue.filter(filterFn)
-    if (toProcess.length) {
+    if (DEBUG && toProcess.length) {
       this._debug('process-q:' + type + '(' + toProcess.length + ')')
     }
 
@@ -428,7 +415,7 @@ class Ambition extends EventEmitter {
 //   var self = this
 //   if (typeof callback !== 'function') {
 //     callback = real_cb
-//     real_cb = void 9
+//     real_cb = undefined
 //   }
 //   listeners = this.insightListeners[insightName]
 //   if (this.insightListeners === this.__proto__.insightListeners) {
@@ -490,6 +477,28 @@ class Ambition extends EventEmitter {
 //     }
 //   }
 // }
+
+/*
+
+I remember I programmed some interesting properties into this fsm. I remember it did promise resolution, to allow for data to be passed between states.
+additionally, it was designed such that each state was to return some elements, and the display would be updated with those states.
+
+to further integrate the stuff, I made it such that each state could be a router path, and the fsm could be used for the components and as well for the website, such that when the component gained focus, it could consider itself in control of the window.history until losing focus. pressing back would refocus the previously focused element and jump to its previous state.
+
+pretty complex stuff I remember. I think it's good enough to be used as the fsm for simple things until I remember how to integrate all of the things.
+
+I think I'm going to reimplement a lot of the functionality in a cleaner way now that I'm not on so many drugs... lol
+
+------------
+
+all stable states begin with a '/'
+all transition states do not have a slash.
+transition states are for gathering data and getting things ready
+
+??? the '>' state is designed for sending out data requests. I think I want to rename this to '->' or 'prepare'
+
+
+*/
 
 
 export default Ambition
