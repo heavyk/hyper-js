@@ -1,5 +1,7 @@
-// import './whammy.css'
+
 import { eases } from './toast-zone'
+
+import './whammy.css'
 
 export default function whammy (G) {
   const {h} = G
@@ -11,7 +13,7 @@ export default function whammy (G) {
 
     if (seconds) setTimeout(() => {
       el.style.opacity = 0
-      setTimeout(() => frame.rC(el), 1000) // max 1s fade out :) this isn't the 90's
+      setTimeout(() => el.rm(), 1000) // max 1s fade out :) this isn't the 90's
     }, seconds * 1000)
 
     return el
