@@ -37,13 +37,13 @@ export function bind2 (l, r) {
 // trigger all listeners
 // old_val has to come first, to allow for things using it to do something like this:
 // emit(emitters, current_val = val, current_val)
-function emit (array, old_val, val) {
-  for (var fn, c = 0, i = 0; i < array.length; i++)
-    if (typeof (fn = array[i]) === 'function') fn(val, old_val)
+function emit (listeners, old_val, val) {
+  for (var fn, c = 0, i = 0; i < listeners.length; i++)
+    if (typeof (fn = listeners[i]) === 'function') fn(val, old_val)
     else c++
 
   // if there are RUN_COMPACTOR_NULLS or more null values, compact the array on next tick
-  if (c > RUN_COMPACTOR_NULLS) setTimeout(compactor, 1, array)
+  if (c > RUN_COMPACTOR_NULLS) setTimeout(compactor, 1, listeners)
 }
 
 // remove a listener
@@ -81,6 +81,7 @@ export function value (initialValue) {
   }
 }
 
+/*
 // An observable that stores a number value.
 export function number (initialValue) {
   // if the value is already an observable, then just return it
@@ -106,6 +107,7 @@ export function number (initialValue) {
     )
   }
 }
+*/
 
 // an observable object
 export function obv_obj (initialValue, _keys) {
@@ -196,12 +198,6 @@ export function transform (obv, down, up) {
   }
 }
 
-
-export var _px = (v) => typeof v === 'string' && ~v.indexOf('px') ? v : v + 'px'
-// @Optimise: store a Map from obv -> transform(obv, _px), so that the same transform is returned
-//            not sure if it'll be less or more memory usage though...
-// @Cleanup: this shouldn't be used any more because hh automatically adds 'px' on to all numeric attributes (cept for opacity)
-export var px = (obv) => transform(obv, _px)
 
 
 // transform an array of obvs
