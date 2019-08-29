@@ -20,9 +20,9 @@
   transition: opacity .5s ease-in;
   user-select: none;
 
-  background: #ccc;
+  background: #000;
   padding: 10px 5px;
-  border-bottom: solid 1px #222;
+  border-top: solid 9px #fff;
 }
 
 
