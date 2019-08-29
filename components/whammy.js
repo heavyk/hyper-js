@@ -3,7 +3,7 @@ import { eases } from './toast-zone'
 
 export default function whammy (G) {
   const {h} = G
-  return (msg, seconds = 2, ease = 'fast', animation = 'toasted') => {
+  return (msg, seconds = 2, ease = 'fast', animation = 'whammy') => {
     let el = h('.whammy', {
       style: { animation: `${animation} ${seconds}s ${eases[ease] || ease} 1 normal forwards` }
     }, msg)
