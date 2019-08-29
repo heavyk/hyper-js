@@ -1,0 +1,33 @@
+
+.toast-zone {
+  color: #4a4a4a;
+  text-align: center;
+  z-index: 1000;
+  position: absolute;
+  width: 300px;
+  left: 50%;
+  transform: translate(-50%, 0);
+
+  /* fancy */
+  color: #dde3ff;
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  letter-spacing: 1px;
+  text-shadow: 0px 1px 1px #000;
+}
+
+.toast {
+  opacity: 1;
+  transition: opacity .5s ease-in;
+  user-select: none;
+
+  background: #ccc;
+  padding: 10px 5px;
+  border-bottom: solid 1px #222;
+  transition: opacity 1.5s ease-in;
+}
+
+
+@keyframes toasted {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(10); opacity: 0; }
+}
