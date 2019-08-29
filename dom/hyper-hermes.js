@@ -231,21 +231,17 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
 }
 
 export function set_style (e, style, cleanupFuncs = []) {
-  // if I use setProperty, then, 'borderRadius' will not work. (which is nice when using LiveScript, cause then the property does not need to be quoted)
   if (typeof style === 'object') {
     for (var s in style) ((s, v) => {
       if (typeof v === 'function') {
         // observable
-        // e.style.setProperty(s, v())
-        e.style[s] = v()
-        cleanupFuncs.push(v((val) => {
-          // console.log(e, 'style:', s, e.style[s], '->', val)
-          // e.style.setProperty(s, val)
-          e.style[s] = val
-        }))
+        cleanupFuncs.push(v((v) => {
+          e.style[s] = typeof v === 'number' && s !== 'opacity' ? v + 'px' : v
+        }, 1))
       } else {
-        // e.style.setProperty(s, v)
-        e.style[s] = v
+        // this is to make positioning elements a whole lot easier.
+        // if you want a numeric value for some reason for something other than px, coerce it to a string first, eg. {order: '1', 'grid-column-start': '3'}
+        e.style[s] = typeof v === 'number' && s !== 'opacity' ? v + 'px' : v
       }
     })(s, style[s])
   } else {

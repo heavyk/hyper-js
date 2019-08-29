@@ -198,7 +198,10 @@ export function transform (obv, down, up) {
 
 
 export var _px = (v) => typeof v === 'string' && ~v.indexOf('px') ? v : v + 'px'
-export var px = (observable) => transform(observable, _px)
+// @Optimise: store a Map from obv -> transform(obv, _px), so that the same transform is returned
+//            not sure if it'll be less or more memory usage though...
+// @Cleanup: this shouldn't be used any more because hh automatically adds 'px' on to all numeric attributes (cept for opacity)
+export var px = (obv) => transform(obv, _px)
 
 
 // transform an array of obvs
