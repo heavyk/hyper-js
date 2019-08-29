@@ -1,5 +1,5 @@
 // import './whammy.css'
-import { eases } from './toast'
+import { eases } from './toast-zone'
 
 export default function whammy (G) {
   const {h} = G
