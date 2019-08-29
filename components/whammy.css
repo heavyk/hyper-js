@@ -1,0 +1,18 @@
+.whammy-zone, .whammy {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.whammy {
+  /* for fade out */
+  opacity: 1;
+  transition: opacity .5s ease-in;
+  user-select: none;
+
+  /* generate z-index in js? */
+  z-index: 1001;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
