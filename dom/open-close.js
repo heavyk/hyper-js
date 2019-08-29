@@ -7,6 +7,7 @@ export default function open_close (opts = {}) {
     autoclose: 'autoclose',
     open: 'open',
     closed: 'closed',
+    is_open: false,
     pinned: false
   }, opts)
 
@@ -18,9 +19,10 @@ export default function open_close (opts = {}) {
         }, sec * 1000), this.classList.add(opts.autoclose), this.open())
       : false)
     },
-    toggle: function () { return this.classList.toggle(opts.closed), this.classList.toggle(opts.open) },
-    open: function () { return this.classList.add(opts.open), this.classList.remove(opts.closed) },
-    close: function () { return this.classList.remove(opts.autoclose, opts.open), this.classList.add(opts.closed) },
-    pin: function () { return opts.pinned = !opts.pinned}
+    toggle: function () { return this.classList.toggle(opts.closed), opts.is_open = this.classList.toggle(opts.open) },
+    open: function () { return this.classList.add(opts.open), this.classList.remove(opts.closed), opts.is_open = true },
+    close: function () { return this.classList.remove(opts.autoclose, opts.open), this.classList.add(opts.closed), opts.is_open = false },
+    pin: function () { return this.classList.remove(opts.autoclose), opts.pinned = !opts.pinned },
+    is_open: () => opts.is_open,
   }
 }
