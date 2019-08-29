@@ -448,13 +448,11 @@ Node.prototype.rm = function () { return this.parentNode.removeChild(this) }
 // shortcut to apply attributes as if they were the second argument to `h('.lala', {these ones}, ...)`
 Node.prototype.apply = function (obj, cleanupFuncs) {
   for (let k in obj) set_attr(this, k, obj[k], cleanupFuncs)
-  return this
 }
 // https://jsperf.com/remove-all-child-nodes/2.atom
 Node.prototype.empty = function () {
   var child
   while (child = this.firstChild) this.removeChild(child)
-  return this
 }
 
 export default h

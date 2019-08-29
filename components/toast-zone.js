@@ -11,7 +11,7 @@ export default function toaster (G, toast_zone_style) {
 
   let toast_zone = h('.toast-zone', {style: toast_zone_style})
   toast_zone.toast = (msg, seconds = 3, ease = 'ease-in', animation = 'toasted') => {
-    // Incomplete: add an animation in here to make the toast more awesome looking
+
     let el = h('.toast', {
       boink: function () { this.style.display = 'none' },
       style: {animation: `${animation} .1s ${eases[ease] || ease}`}
