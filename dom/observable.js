@@ -53,11 +53,12 @@ export function remove (array, item) {
 }
 
 // An observable that stores a value.
+if (DEBUG) var VALUE_LISTENERS = 0
 export function value (initialValue) {
   // if the value is already an observable, then just return it
   if (typeof initialValue === 'function' && initialValue._obv === 'value') return initialValue
   var _val = initialValue, listeners = []
-  if (DEBUG) observable.gc = () => { compactor(listeners); return listeners }
+  if (DEBUG) observable.gc = () => compactor(listeners)
   if (DEBUG) define_prop(observable, 'listeners', { get: observable.gc }) // only on DEBUG builds, is this is accessible.
   observable.set = (val) => emit(listeners, _val, _val = val === undefined ? _val : val)
   observable.once = (fn, do_immediately) => {
@@ -73,9 +74,10 @@ export function value (initialValue) {
   function observable (val, do_immediately) {
     return (
       val === undefined ? _val                                                               // getter
-    : typeof val !== 'function' ? (_val === val ? void 0 : emit(listeners, _val, _val = val), val) // setter only sets if the value has changed (won't work for byref things like objects or arrays)
-    : (listeners.push(val), (_val === undefined || do_immediately === false ? _val : val(_val)), () => {                 // listener
+    : typeof val !== 'function' ? (_val === val ? undefined : emit(listeners, _val, _val = val), val) // setter only sets if the value has changed (won't work for byref things like objects or arrays)
+    : (listeners.push(val), (DEBUG && VALUE_LISTENERS++), (_val === undefined || do_immediately === false ? _val : val(_val)), () => {                 // listener
         remove(listeners, val)
+        DEBUG && VALUE_LISTENERS--
       })
     )
   }
@@ -100,7 +102,7 @@ export function number (initialValue) {
   function observable (val, do_immediately) {
     return (
       val === undefined ? _val                                                               // getter
-    : typeof val !== 'function' ? (_val === val ? void 0 : emit(listeners, _val, _val = val), val) // setter only sets if the value has changed (won't work for byref things like objects or arrays)
+    : typeof val !== 'function' ? (_val === val ? undefined : emit(listeners, _val, _val = val), val) // setter only sets if the value has changed (won't work for byref things like objects or arrays)
     : (listeners.push(val), (_val === undefined || do_immediately === false ? _val : val(_val)), () => {                 // listener
         remove(listeners, val)
       })
@@ -183,17 +185,26 @@ export function property (model, key) {
   }
 }
 
+
+// @Improvement:
+// there is an inefficiency here where `down` will get called as many times as there are listeners.
+// it's just a middle-man.
+// it could be improved to store its own listeners and only subscribe to obv when it has listenrs.
+
+// listens to `obv`, calling `down` with the value first before passing it on to the listener
+// when set, it'll call `up` (if it's set), otherwise `down` with the set value before setting
+// that transformed value in `obv`
 export function transform (obv, down, up) {
   if (DEBUG) ensure_obv(obv)
 
-  observable._obv = 'value'
+  observable._obv = obv._obv
   return observable
 
-  function observable (val, do_immediately) {
+  function observable (arg, do_immediately) {
     return (
-      val === undefined ? down(obv())
-    : typeof val !== 'function' ? obv((up || down)(val))
-    : obv((_val, old) => { val(down(_val, old)) }, do_immediately)
+      arg === undefined ? down(obv())
+    : typeof arg !== 'function' ? obv((up || down)(arg))
+    : obv((cur, old) => { arg(down(cur, old)) }, do_immediately)
     )
   }
 }
@@ -201,10 +212,11 @@ export function transform (obv, down, up) {
 
 
 // transform an array of obvs
-export function compute (observables, compute_fn, do_immediately = false) {
+if (DEBUG) var COMPUTE_LISTENERS = 0
+export function compute (observables, compute_fn) {
   var is_init = true, len = observables.length
-  var cur = new Array(len)
-  var listeners = [], removables = [], _val, fn
+  var obv_vals = new Array(len)
+  var listeners = [], removables = [], cur_value, fn
 
   // the `let` is important here, as it makes a scoped variable used inside the listener attached to the obv. (var won't work)
   for (let i = 0; i < len; i++) {
@@ -212,34 +224,41 @@ export function compute (observables, compute_fn, do_immediately = false) {
     if (typeof fn === 'function') {
       if (DEBUG) ensure_obv(fn)
       removables.push(fn((v) => {
-        var prev = cur[i]
-        cur[i] = v
-        // debugger
-        if (prev !== v && is_init === false) observable(compute_fn.apply(null, cur))
+        var prev = obv_vals[i]
+        obv_vals[i] = v
+        if (prev !== v && is_init === false) observable(compute_fn.apply(null, obv_vals))
       }, is_init))
     } else {
       // items in the observable array can also be literals
-      cur[i] = fn
+      obv_vals[i] = fn
     }
   }
 
-  // if (do_immediately)
-  _val = compute_fn.apply(null, cur)
   observable._obv = 'value'
-  if (DEBUG) observable.gc = () => { compactor(listeners); return listeners }
-  if (DEBUG) define_prop(observable, 'listeners', { get: observable.gc }) // only on DEBUG builds, is this is accessible.
+  if (DEBUG) observable.gc = () => compactor(listeners)
+  if (DEBUG) define_prop(observable, 'listeners', { get: observable.gc })
+  observable.cleanup = () => { for (fn of removables) fn() }
+
+  cur_value = compute_fn.apply(null, obv_vals)
   is_init = false
 
   return observable
 
-  function observable (val, do_immediately) {
+  function observable (arg, do_immediately) {
+    // this is probably the clearest code I've ever written... lol
     return (
-      val === undefined ? _val                                                               // getter
-    : typeof val !== 'function' ? (_val === val ? void 0 : emit(listeners, _val, _val = val), val) // setter (the new way - only sets if the value has changed)
-    : (listeners.push(val), (_val === undefined || do_immediately === false ? _val : val(_val)), () => {                 // listener
-        remove(listeners, val)
-        for (fn of removables) fn()
-      })
+      arg === undefined ? (                 // 1. to arg: getter... eg. obv()
+        cur_value === undefined ? (
+          cur_value = compute_fn.apply(null, obv_vals))
+      : cur_value)
+    : typeof arg !== 'function' ? (         // 2. arg is a value: setter... eg. obv(1234)
+      cur_value === arg ? undefined         // same value? do nothing
+      : emit(listeners, cur_value, cur_value = arg), arg) // emit changes to liseners
+    : (listeners.push(arg),                 // arg is a function. add it to the listeners
+      (DEBUG && COMPUTE_LISTENERS++),       // dev code to help keep leaks from getting out of control
+      (do_immediately === false ? 0         // if do_immediately === false, do notihng
+        : arg(cur_value)),                  // otherwise call the listener with the current value
+      () => { remove(listeners, arg); DEBUG && COMPUTE_LISTENERS-- }) // unlisten function
     )
   }
 }
@@ -261,3 +280,12 @@ export function observable_property (obj, key, o) {
   define_prop(obj, key, define_getter((v) => { o(v) }, () => o()))
   return () => { define_prop(obj, key, define_value(o(), true)) }
 }
+
+export function PRINT_COUNTS () {
+  let counts = { value: VALUE_LISTENERS, compute: COMPUTE_LISTENERS }
+  console.log(counts)
+  return counts
+}
+
+
+// older stuff
