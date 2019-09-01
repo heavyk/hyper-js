@@ -17,7 +17,7 @@
 
 .toast {
   opacity: 1;
-  transition: opacity .5s ease-in;
+  transition: opacity .4s ease-in;
   user-select: none;
 
   background: #000;
