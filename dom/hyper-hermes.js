@@ -9,7 +9,7 @@
 
 import { is_obv } from './observable'
 import { observe, add_event } from './observable-event'
-import { define_prop, define_value, error } from '../utils'
+import { define_prop, array_idx, define_value, error } from '../utils'
 
 import { win, doc, customElements } from './dom-base'
 import { isNode, txt, comment } from './dom-base'
@@ -264,7 +264,7 @@ export function arrayFragment (e, arr, cleanupFuncs) {
   if (arr.observable === 'array') {
     // TODO: add a comment to know where the array begins and ends (a la angular)
     function onchange (ev) {
-      var i, j, o, oo
+      var i, j, o, oo, len = arr.length
       switch (ev.type) {
       case 'unshift':
         for (i = ev.values.length - 1; i >= 0; i--)
@@ -275,21 +275,32 @@ export function arrayFragment (e, arr, cleanupFuncs) {
           e.insertBefore(isNode(o = ev.values[i]) ? o : txt(o), arr[arr.length + ev.values.length - i - 1])
         break
       case 'pop':
-        e.removeChild(arr[arr.length-1])
+        e.removeChild(arr[len-1])
         break
       case 'shift':
         e.removeChild(arr[0])
         break
       case 'splice':
-        j = ev.idx
-        if (ev.remove) for (i = 0; i < ev.remove; i++)
-          e.removeChild(arr[j + i])
+        if ((j = ev.idx) < 0) j += len // -idx
+        // experimental:
+        if (ev.remove) for (i = 0; i < ev.remove; i++) {
+          if (o = arr[j++]) {
+            if (oo = ev.add[i]) e.replaceChild(isNode(oo) ? oo : txt(oo), o)
+            else e.removeChild(o)
+          }
+        }
         if (ev.add) for (i = 0; i < ev.add.length; i++)
           e.insertBefore(isNode(o = ev.add[i]) ? o : txt(o), arr[j])
+        // working (just in case replaceChild has some weird cases):
+        // if (ev.remove) for (i = 0; i < ev.remove; i++)
+        //   if (o = arr[j++]) e.removeChild(o)
+        // if (ev.add) for (i = 0; i < ev.add.length; i++)
+        //   e.insertBefore(isNode(o = ev.add[i]) ? o : txt(o), arr[j])
+
         break
       case 'sort':
         // technically no longer used, but still exists mainly for comparison purposes
-        // although less element swaps are done, with quiksort, it may be taxing on paint performance...
+        // although less element swaps are done with quiksort, it may be taxing on paint performance...
         // looking into it eventually :)
         for (i = 0, oo = ev.orig; i < arr.length; i++) {
           o = arr[i]
@@ -310,23 +321,28 @@ export function arrayFragment (e, arr, cleanupFuncs) {
         if (i === 1) o.focus(), o.focused = 0
         break
       case 'insert':
-        e.insertBefore(ev.val, arr[ev.idx])
+        if ((i = ev.idx) < 0) i += len // -idx
+        e.insertBefore(ev.val, arr[i])
         break
       case 'reverse':
         for (i = 0, j = +(arr.length / 2); i < j; i++)
           arr.emit('change', {type: 'swap', from: i, to: arr.length - i - 1 })
         break
       case 'move':
-        o = arr[ev.from]
+        if ((i = ev.from) < 0) i += len // -idx
+        if ((j = ev.to) < 0) j += len   // -idx
+        o = arr[i]
         if (activeElement(o)) i = 1
-        e.insertBefore(o, arr[ev.to])
+        e.insertBefore(o, arr[j])
         if (i === 1) o.focus()
         break
       case 'swap':
         ev.j = h('div.swap', o = {s: {display: 'none'}})
         ev.k = h('div.swap', o)
-        oo = arr[ev.from]
-        o = arr[ev.to]
+        if ((i = ev.from) < 0) i += len // -idx
+        if ((j = ev.to) < 0) j += len   // -idx
+        oo = arr[i]
+        o = arr[j]
         if (activeElement(o)) i = 1
         else if (activeElement(oo)) i = 2
         e.replaceChild(ev.j, oo)
@@ -337,10 +353,12 @@ export function arrayFragment (e, arr, cleanupFuncs) {
         else if (i === 2) oo.focus()
         break
       case 'remove':
-        e.removeChild(arr[ev.idx])
+        if ((i = ev.idx) < 0) i += len // -idx
+        e.removeChild(arr[i])
         break
       case 'set':
-        e.replaceChild(ev.val, arr[ev.idx])
+        if ((i = ev.idx) < 0) i += len // -idx
+        e.replaceChild(ev.val, arr[i])
         break
       case 'empty':
         for (i = 0; i < arr.length; i++)
