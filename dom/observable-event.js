@@ -20,11 +20,11 @@ export const dispatch_event = (element, event, val) => (element.dispatchEvent(ne
 
 export const prevent_default = (e) => e && e.preventDefault()
 
-export function listen (element, event, attr, listener, do_immediately) {
-  let onEvent = (e) => { listener(typeof attr === 'function' ? attr() : attr ? element[attr] : e) }
-  on(element, event, onEvent)
-  do_immediately && attr && onEvent()
-  return () => off(element, event, onEvent)
+export function listen (element, event, attr, listener, do_immediately, opts) {
+  let on_event = (e) => { listener(typeof attr === 'function' ? attr() : attr ? element[attr] : e) }
+  on(element, event, on_event, opts)
+  do_immediately && attr && on_event()
+  return () => off(element, event, on_event, opts)
 }
 
 // observe any event, reading any attribute
@@ -139,10 +139,10 @@ export function add_event (e, event, listener, opts) {
 // https://www.html5rocks.com/en/mobile/touchandmouse/
 // https://www.html5rocks.com/en/mobile/touch/
 // look into `passive: true` as a replacement for the `preventDefault` functionality.
-export function do_boink (el, obv) {
+export function do_boink (el, obv, opts) {
   this.push(
-    listen(el, 'click', false, () => { is_obv(obv) ? obv(!obv()) : obv() }),
-    listen(el, 'touchstart', false, (e) => { prevent_default(e); is_obv(obv) ? obv(!obv()) : obv() })
+    listen(el, 'click', false, (ev) => { is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts),
+    listen(el, 'touchstart', false, (ev) => { prevent_default(ev); is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts)
   )
 }
 
@@ -187,24 +187,10 @@ export function observe (el, observe_obj) {
         )
         break
       case 'boink':
-        // do_boink was only called here:
-        // do_boink.call(cleanupFuncs, e, v)
-        // so, it got inlined...
-        cleanupFuncs.push(
-          listen(el, 'click', false, (ev) => { is_obv(v) ? v(!v()) : v.call(el, ev) }),
-          listen(el, 'touchstart', false, (ev) => { prevent_default(ev); is_obv(v) ? v(!v()) : v.call(el, ev) })
-        )
+        do_boink.call(cleanupFuncs, el, v)
         break
       case 'press':
-        // do_press was only called here:
-        // do_press.call(cleanupFuncs, e, v)
-        // so, it got inlined...
-        cleanupFuncs.push(
-          listen(el, 'mouseup', false, () => { v(false) }),
-          listen(el, 'mousedown', false, () => { v(true) }),
-          listen(el, 'touchend', false, (e) => { prevent_default(e); v(false) }),
-          listen(el, 'touchstart', false, (e) => { prevent_default(e); v(true) })
-        )
+        do_press.call(cleanupFuncs, el, v)
         break
       default:
       // case 'keyup':
