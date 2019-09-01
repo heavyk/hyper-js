@@ -247,10 +247,9 @@ export function mergeDeepArray(target, ...sources) {
   return mergeDeep(target, ...sources)
 }
 
-window.empty_array = empty_array
 export function empty_array (n, init_value = 0) {
   var array = Array(n)
-  while (n-- > 0) array[n] = init_value
+  while (n-- > 0) array[n] = typeof init_value === 'function' ? init_value(n) : init_value
   return array
 }
 
