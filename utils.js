@@ -253,6 +253,8 @@ export function empty_array (n, init_value = 0) {
   return array
 }
 
+export const array_idx = (len, idx) => idx < 0 : len + idx : idx
+
 // left_pad((1234).toString(16), 20, '0')
 // > "000000000000000004d2"
 export const left_pad = (nr, n = 2, str = '0') => Array(n - (nr+'').length + 1).join(str) + nr
