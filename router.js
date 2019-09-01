@@ -193,9 +193,9 @@ export default class Router extends EventEmitter {
           var options = { state: {} }
 
           if (_this.route && _this.route.view) {
-            _this.globals.forEach(function (global) {
+            for (let global of _this.globals) {
               options.state[global] = _this.route.view.get(global)
-            })
+            }
           }
 
           _this.dispatch(href, options)

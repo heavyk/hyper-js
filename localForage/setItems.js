@@ -3,7 +3,6 @@
 // original code here:
 // https://github.com/thgreasi/localForage-setItems
 
-import Promise from 'lie'
 import executeCallback from './utils/executeCallback'
 import serializer from './utils/serializer'
 

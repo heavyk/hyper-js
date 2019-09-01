@@ -7,7 +7,7 @@ var slice = [].slice
 import EventEmitter from '@lib/drip/enhanced'
 
 // import { mergeDeep } from '@lib/utils'
-import { extend } from '@lib/utils'
+import { extend, each } from '@lib/utils'
 
 class Ambition extends EventEmitter {
   constructor (id, options) {
@@ -296,7 +296,7 @@ class Ambition extends EventEmitter {
       this._debug('process-q:' + type + '(' + toProcess.length + ')')
     }
 
-    toProcess.forEach(function (item) {
+    each(toProcess, function (item) {
       var fn, i
       if (filterFn(item, i)) {
         fn = item.type === 'deferred' || item.type === 'emerge'

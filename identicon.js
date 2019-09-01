@@ -1,4 +1,4 @@
-import { mergeDeep, forEach } from '../lib/utils'
+import { mergeDeep, each } from '../lib/utils'
 import hsl2rgb from '../lib/color/hsl2rgb'
 import rgba2color from '../lib/color/rgba2color'
 import { hex } from '../lib/parse/number'
@@ -49,7 +49,7 @@ export function identicon (hash, opts = {}) {
     // h('img', {width: size, height: size, src: 'data:image/svg+xml;base64,' + btoa(
     s('svg', { width: size, height: size, style: { backgroundColor: bg }},
       s('g', {style: { fill: fg, stroke: fg, strokeWidth: size * 0.005 }},
-        forEach(rects, (rect) => s('rect', mergeDeep({width: xCell, height: cell}, rect)))
+        each(rects, (rect) => s('rect', mergeDeep({width: xCell, height: cell}, rect)))
       )
     )
     // .outerHTML)})

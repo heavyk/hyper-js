@@ -14,15 +14,15 @@ export function __debug (msg) {
 }
 
 // micro-optimization: http://jsperf.com/for-vs-foreach/292
-export function forEach (arr, fn) {
+export function each (arr, fn) {
   for (var i = 0; i < arr.length; ++i) fn.call(arr, arr[i], i)
 }
 
-export function forEachReverse (arr, fn) {
+export function each_reverse (arr, fn) {
   for (var i = arr.length - 1; i >= 0; i--) fn.call(arr, arr[i], i)
 }
 
-export function callEach (arr) {
+export function call_each (arr) {
   for (var i = 0; i < arr.length; ++i) arr[i].call(arr)
 }
 
@@ -70,10 +70,7 @@ export function compact (array) {
 
 // removes (using splice) by strict-comparison all of `value` (default: null) from an array
 export function remove_every (array, value = null) {
-  var i = -1,
-      len = array.length,
-      to_remove = 0
-
+  var i = -1, len = array.length, to_remove = 0
   while (++i < len) {
     while (array[i + to_remove] === value) to_remove++
     if (to_remove > 0) {

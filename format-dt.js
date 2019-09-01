@@ -1,4 +1,4 @@
-import { forEach, sprintf } from '../lib/utils'
+import { each, sprintf } from '../lib/utils'
 
 // @unfinished - locale configuration
 // see moment and also: https://github.com/betsol/time-delta/blob/master/lib/time-delta.js
@@ -31,7 +31,7 @@ export function dt2unit (dt) {
 export function dt2units (dt) {
   dt = Math.abs(dt)
   var results = []
-  forEach(time_units, (unit) => {
+  each(time_units, (unit) => {
     var divider = unit[1]
     var value = dt > 0 ? Math.floor(dt / divider) : 0
     var key = unit[0]
@@ -46,7 +46,7 @@ export function dt2units (dt) {
 export function format_dt (units) {
   if (typeof units === 'number') units = dt2units(units)
   var results = []
-  forEach(time_units, ([k]) => {
+  each(time_units, ([k]) => {
     var v = units[k]
     if (v !== undefined) results.push([v, k])
   })

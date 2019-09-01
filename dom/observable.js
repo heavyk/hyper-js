@@ -1,6 +1,6 @@
 'use strict'
 
-import { define_prop, define_props, define_value, define_getter, forEach, remove_every as compactor, error } from '../utils'
+import { define_prop, define_props, define_value, define_getter, remove_every as compactor, error } from '@hyper/utils'
 
 // knicked from: https://github.com/dominictarr/observable/blob/master/index.js
 // mostly unmodified...

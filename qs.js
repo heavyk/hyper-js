@@ -1,5 +1,7 @@
 // knicked from https://github.com/Alex1990/tiny-qs/blob/master/tiny-qs.js
 
+import { each } from '@hyper/utils'
+
 var objProto = Object.prototype
 
 // Util object.
@@ -30,13 +32,7 @@ _.has = function (obj, prop) {
 
 _.each = function (obj, callback) {
   if (_.isArray(obj)) {
-    if (_.isFunction(obj.forEach)) {
-      obj.forEach(callback)
-    } else {
-      for (var i = 0, len = obj.length; i < len; i++) {
-        callback(obj[i], i, obj)
-      }
-    }
+    each(obj, callback)
   } else if (_.isObject(obj)) {
     for (var p in obj) {
       if (_.has(obj, p)) {
