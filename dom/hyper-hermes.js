@@ -455,4 +455,8 @@ Node.prototype.empty = function () {
   while (child = this.firstChild) this.removeChild(child)
 }
 
+// event emitter shortcuts
+Node.prototype.on = Node.prototype.addEventListener
+Node.prototype.off = Node.prototype.removeEventListener
+
 export default h

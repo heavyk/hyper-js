@@ -8,7 +8,7 @@ export const on = (emitter, event, listener, opts = false) =>
 
 // unregister a listener
 export const off = (emitter, event, listener, opts = false) =>
-  (emitter.off || emitter.removeListener || emitter.removeEventListener)
+  (emitter.off || emitter.removeEventListener)
     .call(emitter, event, listener, opts)
 
 // dispatch an event
