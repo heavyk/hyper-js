@@ -437,26 +437,27 @@ export const obvNode = (e, v, cleanupFuncs = []) => {
   return r
 }
 
+const Node_prototype = Node.prototype
 // shortcut to append multiple children (w/ cleanupFuncs)
-Node.prototype.iB = function (el, ref, cleanupFuncs) { return this.insertBefore(obvNode(this, el, cleanupFuncs), ref) }
+Node_prototype.iB = function (el, ref, cleanupFuncs) { return this.insertBefore(obvNode(this, el, cleanupFuncs), ref) }
 // shortcut to append multiple children (w/ cleanupFuncs)
-Node.prototype.aC = function (el, cleanupFuncs) { return this.appendChild(obvNode(this, el, cleanupFuncs)) }
+Node_prototype.aC = function (el, cleanupFuncs) { return this.appendChild(obvNode(this, el, cleanupFuncs)) }
 // shortcut to removeChild
-Node.prototype.rC = function (child) { return this.removeChild(child) }
+Node_prototype.rC = function (child) { return this.removeChild(child) }
 // shortcut to remove myself from the dom
-Node.prototype.rm = function () { return this.parentNode ? this.parentNode.removeChild(this) : null }
+Node_prototype.rm = function () { return this.parentNode ? this.parentNode.removeChild(this) : null }
 // shortcut to apply attributes as if they were the second argument to `h('.lala', {these ones}, ...)`
-Node.prototype.apply = function (obj, cleanupFuncs) {
+Node_prototype.apply = function (obj, cleanupFuncs) {
   for (let k in obj) set_attr(this, k, obj[k], cleanupFuncs)
 }
 // https://jsperf.com/remove-all-child-nodes/2.atom
-Node.prototype.empty = function () {
+Node_prototype.empty = function () {
   var child
   while (child = this.firstChild) this.removeChild(child)
 }
 
 // event emitter shortcuts
-Node.prototype.on = Node.prototype.addEventListener
-Node.prototype.off = Node.prototype.removeEventListener
+Node_prototype.on = Node_prototype.addEventListener
+Node_prototype.off = Node_prototype.removeEventListener
 
 export default h
