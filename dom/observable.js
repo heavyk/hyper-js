@@ -263,6 +263,18 @@ export function compute (observables, compute_fn) {
   }
 }
 
+export function calc (observables, compute_fn) {
+  var len = observables.length, fn
+  var obv_vals = new Array(len)
+
+  // the `let` is important here, as it makes a scoped variable used inside the listener attached to the obv. (var won't work)
+  for (let i = 0; i < len; i++) {
+    obv_vals[i] = typeof (fn = observables[i]) === 'function' ? fn() : fn
+  }
+
+  return compute_fn.apply(null, obv_vals)
+}
+
 export function boolean (obv, truthy, falsey) {
   return (
     transform(obv,
