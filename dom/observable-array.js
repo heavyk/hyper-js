@@ -1,6 +1,6 @@
 import MixinEmitter from '@lib/drip/MixinEmitter'
 import { value, obv_obj, observable_property } from '@lib/dom/observable'
-import { swap, define_prop, define_getter } from '@lib/utils'
+import { empty_array, swap, define_prop, define_getter } from '@lib/utils'
 import { new_ctx } from '@lib/dom/hyper-ctx'
 import isEqual from '@lib/isEqual'
 // import invoke from '@lib/lodash/invoke'
@@ -127,8 +127,7 @@ export class ObservableArray extends MixinEmitter(Array) {
   }
 
   set (idx, val) {
-    idx = idx >>> 0
-    // DEBUG && if (idx >= this.length) debugger // what should be done for sparse arrays?
+    if (idx < 0) idx += this.length
     if (isEqual(this[idx], val)) return
     this.emit('change', { type: 'set', idx, val })
     this[idx] = val
@@ -206,8 +205,15 @@ export function ObservableArrayApply (oarr, ...arr) {
 }
 
 
+// G: ctx from which to inherit sub ctxs
+// data: an ObservableArray of values which will be transformed into a dom reprenstation by `fn`
+// fn: function receiving 1-3 arguments: (d, ctx, idx) for each item in the array
+// opts:
+//   plain: true/false - the data passed for each value in the array is a plain object or value/obv_object
+//   min: [number] - render at least n items always. for items that are empty, call opts.empty_fn instead
+//   empty_fn: [function] - @Incomplete: should receive (idx).
 export class RenderingArray extends ObservableArray {
-  constructor (G, data, fn, opts = { plain: false }) {
+  constructor (G, data, fn, opts = { plain: true }) {
     super()
     this.fn = typeof data === 'function' ? (fn = data) : fn
     let k, fl = this.fl = fn.length
@@ -221,6 +227,10 @@ export class RenderingArray extends ObservableArray {
     if (fl >= 2) this._ctx = []
     if (fl >= 3) this._idx = []
 
+    if (opts.min) {
+      this.empty_fn = typeof opts.empty_fn === 'function' ? opts.empty_fn : () => 'empty'
+    }
+
     // assigns options to `this`
     for (k in opts) this[k] = opts[k]
 
@@ -230,12 +240,12 @@ export class RenderingArray extends ObservableArray {
 
   data (data) {
     const onchange = this._onchange = (e) => {
-      var v, t, i, j, len = this.length, fl = this.fl, type = e.type, a = this
+      var v, t, i, j, k, len = this._d.length, fl = this.fl, type = e.type, min = +this.min || 0, a = this
       switch (type) {
-        // TODO: in places where no swapping is done, just update this._d
+        // @Leak: perhaps check to see if idx obvs do not have any listeners
         case 'swap':
-          i = e.from
-          j = e.to
+          if ((i = e.from) < 0) i += len // -idx
+          if ((j = e.to) < 0) j += len   // -idx
           if (fl >= 1) swap(this._d, j, i)
           if (fl >= 2) swap(this._ctx, j, i)
           if (fl >= 3) {
@@ -246,8 +256,8 @@ export class RenderingArray extends ObservableArray {
           swap(this, j, i)
           break
         case 'move':
-          i = e.from
-          j = e.to
+          if ((i = e.from) < 0) i += len // -idx
+          if ((j = e.to) < 0) j += len   // -idx
           if (fl >= 1) v = this._d.splice(i, 1), this._d.splice(j, 0, v[0])
           if (fl >= 2) v = this._ctx.splice(i, 1), this._ctx.splice(j, 0, v[0])
           if (fl >= 3) {
@@ -258,7 +268,8 @@ export class RenderingArray extends ObservableArray {
           v = super.splice(i, 1), super.splice(j, 0, v[0])
           break
         case 'set':
-          i = e.idx, v = e.val
+          if ((i = e.idx) < 0) i += len // -idx
+          v = e.val
           super[i] = v
           if (fl >= 1) this._d[i].set(v)
           break
@@ -271,65 +282,86 @@ export class RenderingArray extends ObservableArray {
           if (fl >= 3) this._idx.splice(0, 0, ...v)
           for (v of e.values) super.unshift(this.fn_call(v, i++))
           if (fl >= 3) for (; i < len; i++) this._idx[i](i)
+          if (min && (i = min - len - v.length) > 0) super.splice(-i, i) // remove that many values from the end of the rendering array
           break
         case 'push':
+          j = len
           i = len + e.values.length
           t = []
           // make space in storage arrays
           if (fl >= 1) this._d.length = i
           if (fl >= 2) this._ctx.length = i
           if (fl >= 3) this._idx.length = i
+          i = Math.min(i, min) - len
           for (v of e.values) t.push(this.fn_call(v, len++))
-          super.push(...t)
+          if (i) super.splice(j, i, ...t)
+          else super.push(...t)
           break
         case 'splice':
-          i = e.idx
+          if ((i = e.idx) < 0) i += len // -idx
           j = e.remove
           // make space in storage arrays by splicing in undefined values (to be filled in by fn_call)
-          v = new Array(e.add.length)
+          v = new Array(k = e.add.length)
           if (fl >= 1) this._d.splice(i, j, ...v)
           if (fl >= 2) t = this._ctx.splice(i, j, ...v)
           if (fl >= 3) this._idx.splice(i, j, ...v)
-          // TODO: not sure if this is right, actually... perhaps I need to make the elements identifiable (so that the arrayFragment listener gets it right)
           for (v of t) v.cleanup()
           t = [] // temp array to save rendered elements
-          len = i - j // reduce index by number of removes
-          for (v of e.add) t.push(this.fn_call(v, len++))
+          len += k - j
+          k = i
+          for (v of e.add) t.push(this.fn_call(v, k++))
+          if (fl >= 3) for (k = i; k < len; k++) this._idx[k](k)
           super.splice(i, j, ...t)
-          if (fl >= 3) for (; i < len; i++) this._idx[i](i)
+          if (min) {
+            i = min - len
+            if (i < 0) super.splice(i, -i)
+            if (i > 0) super.push(...empty_array(i, this.empty_fn))
+          }
           break
         case 'remove':
-          i = e.idx
+          if ((i = e.idx) < 0) i += len // -idx
           if (fl >= 1) this._d.splice(i, 1)
           if (fl >= 2) this._ctx.splice(i, 1)[0].cleanup()
           if (fl >= 3) this._idx.splice(i, 1)
-          super.splice(i, 1)[0]
+          super.splice(i, 1)
+          if (min >= len) super.push(this.empty_fn())
           if (fl >= 3) for (len--; i < len; i++) this._idx[i](i)
           break
         case 'replace':
         case 'insert':
-          i = e.idx
+          if ((i = e.idx) < 0) i += len // -idx
           j = type === 'replace' ? 1 : 0
           if (fl >= 1) this._d.splice(i, j, null)
           if (fl >= 2) v = this._ctx.splice(i, j, null)
           if (fl >= 3) this._idx.splice(i, j, null)
           super.splice(i, j, this.fn_call(e.val, i))
-          if (j > 0 && v[0]) v[0].cleanup()                        // replace: clean up old ctx
-          else if (fl >= 3) for (; i <= len; i++) this._idx[i](i)   // insert: update the indexes
+          if (j > 0) {
+            // replace
+            if (fl >= 2 && v[0]) v[0].cleanup()                        // replace: clean up old ctx
+          } else {
+            // insert
+            if (fl >= 3) for (; i <= len; i++) this._idx[i](i)   // insert: update the indexes
+            if (len <= min) super.pop()
+          }
+
           break
         case 'sort':
           t = []
+          i = min - len
+          if (min && i > 0) v = super.splice(-i, i)
           let listen = (e) => { t.push(e) }
           this.d.on('change', listen)
-          this.d.selectionsort(e.compare)
+          this.d.sort(e.compare)
           this.d.off('change', listen)
           for (v of t) super.emit('change', v)
+          if (min && i > 0) v = super.splice(-i, 0, ...v)
           break
         case 'empty':
           super.empty()
           if (fl >= 1) this._d.length = 0
           if (fl >= 2) { for (v of this._ctx) { v.cleanup() } this._ctx.length = 0 }
           if (fl >= 3) this._idx.length = 0
+          if (min) this.push(...empty_array(min, this.empty_fn))
           break
         // no args
         case 'reverse':
@@ -346,19 +378,22 @@ export class RenderingArray extends ObservableArray {
           if ((v = this._ctx[type]()) && len) v.cleanup()
           this._idx[type]()
           super[type]()
+          if (min && len && min > len) super.push(this.empty_fn())
           break
       }
     }
 
     if (data instanceof ObservableArray) {
-      var i = 0, len = data.length, _d = []
-      // TODO: technically, I don't need to empty the array at all... just update the values of this._d for each one, then push on (or splice off) the difference
+      var i = 0, len = data.length, min = +this.min || 0, _d = []
 
       // empty / cleanup the array
+      // @Optimise: technically, the array doesn't need to be emptied at all...
+      //   just update the values of this._d for each one, then push on (or splice off) the difference
       if (this.length > 0) this.empty()
 
-      if (len > 0) {
+      if (len || min) {
         for (; i < len; i++) _d.push(this.fn_call(data[i], i))
+        if (min > len) for (; i < min; i++) _d.push(this.empty_fn(i))
         super.push(..._d)
       }
 
@@ -399,6 +434,33 @@ export class RenderingArray extends ObservableArray {
   }
 }
 
-let proto = RenderingArray.prototype
-for (let p of ['swap','move','set','unshift','push','splice','remove','replace','insert','sort','empty','pop','reverse','shift','setPath'])
-  proto[p] = function () { return this.d[p].apply(this.d, arguments) }
+;(() => {
+  // so it garbage collects...
+  let proto = RenderingArray.prototype
+  for (let p of ['swap','move','set','unshift','push','splice','remove','replace','insert','sort','empty','pop','reverse','shift','setPath'])
+    proto[p] = function () { return this.d[p].apply(this.d, arguments) }
+})()
+
+// RenderingArray is already some pretty dense code,
+// however, it would be nice to make a fixed size
+// version which only renders a 'window' of the data.
+// when the window is bigger than the data size, it'll show
+// empty spots. and when the window is smaller than the data,
+// it can optionally include call a function which inserts dummy elements or resizes
+// some ending elements to simulate the data existing farther up in the scroll.
+
+// some options would be to simply copy and paste the majority of the code, or to
+// try and do everything with options in RenderingArray.
+//
+// the idea of making extra space on the top/bottom to simulate more data being there
+// than is rendered would nearly require a whole separate functin -- cept there would
+// *still* be 80% or more duplicated code.
+
+// for stuff like this, I really wish js had jon's jai macros!!! (LOL, I know..)
+
+// export class FixedSizeRenderingArray extends RenderingArray {
+//   constructor (G, data, fn, size, fn_empty, opts) {
+//     super(G, data, fn, opts)
+//     this.fne = fn_empty
+//   }
+// }
