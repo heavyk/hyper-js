@@ -9,9 +9,9 @@ export default function modal (G, opts = {}) {
   opts.title = v(opts.title || null) // null so that it gets a value. if it remains undefined, the obv won't init.
   opts.content = v(opts.content(ctx))
   opts.footer = v(opts.footer)
-  opts.close = function close () {
+  let close = opts.close = () => {
     el.rm()
-    // ctx.cleanup()
+    ctx.cleanup()
   }
 
   // @Incomplete: needs to know about its parent element, so that it can append itself into it
@@ -19,7 +19,7 @@ export default function modal (G, opts = {}) {
   // @Incomplete: switch the close button from text content to use the i.close element instead
 
   let el =
-  h('.modal-background', {boink: function (ev) { ev.target === this && close() }},
+  h('.modal-background', {boink: (ev) => { ev.target === el && close() }},
     h('.modal',
       t(opts.title, (title) => title ?
         h('h1.header', opts.title,
