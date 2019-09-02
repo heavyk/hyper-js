@@ -3,9 +3,16 @@ import { define_getter, define_value } from '../utils'
 import { random_id } from '../utils'
 import { h, s } from './hyper-hermes'
 
+// default obv functions provided
+import { value, transform, compute } from '../dom/observable'
+import { update_obv } from '../dom/observable-event'
+
 // I'm not sure this is the best way to do this...
 
-const global_ctx = () => new_ctx({h, s}, 'global')
+const global_ctx = () => new_ctx({
+  h, s,
+  v: value, t: transform, c: compute, m: update_obv
+}, 'global')
 
 export function el_ctx (el) {
   var ctx

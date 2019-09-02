@@ -1,12 +1,9 @@
-import { mergeDeep, objJSON, random_id } from '../utils'
+import { mergeDeep, objJSON, random_id, extend } from '../utils'
 
-import { value, transform, compute } from '../dom/observable'
-// actually, is this needed to be shortcut to `m` directly? I don't think it gets used all that often.
-// actually, any of these extras like this can be imported as needed.
-import { update_obv } from '../dom/observable-event'
+import { value } from '../dom/observable'
 import ResizeSensor from '../dom/resize-sensor'
 
-import { h, s } from '../dom/hyper-hermes'
+import { h } from '../dom/hyper-hermes'
 import { doc, body, win, IS_LOCAL, basePath } from '../dom/dom-base'
 import { isNode, getElementById } from '../dom/dom-base'
 import { new_ctx, el_ctx } from '../dom/hyper-ctx'
@@ -74,10 +71,6 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
   G.dpr = value(_dpr)
 
   frame._id = id
-  // DEPRECATED!!!
-  // if (!(set_data = frame.set_data)) {
-  //   set_data = frame.set_data = value()
-  // }
 
   ;(function (_cleanup) {
     frame.cleanup = () => {
@@ -117,28 +110,26 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
   //   })
   // }
 
-  // this is kinda a hacky way to be doing `args` -- really, args should be the `ctx`, with all the obvs and everything
-  // it would be cool if this were to return an object, similar to the way new Ractive() does it.
-  args = { C, G, E, v: value, t: transform, c: compute, m: update_obv, h: G.h, s: G.s }
+  args = extend(G, { C, G, E })
 
   // next thing is, `onload` should operate exactly the same as `reload`
   // it's just the function that is called which will return a working vdom.
   // the only difference between onload and reload is that cleanup is supposed to have been called between the two.
 
-
   ;(function (onload) {
     function loader () {
       var e, i = 0, resize
       // remove everything inside of the frame
-      while (e = frame.firstChild)
-        frame.removeChild(e)
+      frame.empty()
+      // while (e = frame.firstChild)
+      //   frame.removeChild(e)
 
       // set the data (not really sure why it's done before comments are removed from the body)
       // if (_data) set_data(_data)
 
       // remove all html comments from the body (I rememeber they caused problems, but I don't remember exatly what..)
       while (e = body.childNodes[i])
-        if (e.nodeName[0] === '#') body.removeChild(e)
+        if (e.nodeName[0] === '#') body.rC(e)
         else i++
 
       // it would be really cool if this would work with generators, promises, async and normal functions
