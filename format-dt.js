@@ -1,6 +1,7 @@
-import { each, sprintf } from '../lib/utils'
+import { each, sprintf } from '@hyper/utils'
 
-// @unfinished - locale configuration
+// @Incomplete: - move locale configuration to lingua
+// @Incomplete: - merge the locale with 'date-format' so they share
 // see moment and also: https://github.com/betsol/time-delta/blob/master/lib/time-delta.js
 
 export const time_units = (() => {
