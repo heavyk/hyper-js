@@ -9,12 +9,14 @@ function plugger (starting_panel, C = {}, D = {}) {
     // for now, it's bad because it doesn't pause the debugger
     if (DEBUG) return starting_panel(args)
     else try {
-      return starting_panel(args)
+      let el = starting_panel(args)
+      if (Array.isArray(el)) el = args.h('.plugger', el)
+      return el
     } catch (e) {
       console.error('error in plugin('+name+'):', e)
     }
   }
-  
+
   pluginBoilerplate(name, null, C, D, {}, beginner)
 }
 
