@@ -155,7 +155,7 @@ export function dt2relative (dt, without_suffix, locale) {
 }
 
 function substitute_relative (key, number, without_suffix, is_future, locale) {
-  var L = locales[locale || 'en'] || locales.en
+  var L = locales[locale || 'en']
   var relativeTime = L.relativeTime
   var str
   return typeof relativeTime === 'function' ?

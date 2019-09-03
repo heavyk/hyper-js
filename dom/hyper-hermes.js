@@ -40,20 +40,21 @@ export var short_attrs_rev = { className: 'class', htmlFor: 'for' }
 // when common_tags = ['div','input','div.lala']
 export var common_tags = ['div']
 
-function context (createElement) {
+function context (create_element) {
   var cleanupFuncs = []
 
   function h(...args) {
     var e
     function item (l) {
       var r, s, i, o, k
-      const parseSelector = (string) => {
+      function parse_selector (string) {
         var v, m = string.split(/([\.#]?[a-zA-Z0-9_:-]+)/)
-        if (/^\.|#/.test(m[1])) e = createElement('div')
+        if (/^\.|#/.test(m[1])) e = create_element('div')
+        // if (!root) root = e // the first element this
         for (v of m) {
           if (typeof v === 'string' && (i = v.length)) {
             if (!e) {
-              e = createElement(v, args)
+              e = create_element(v, args)
             } else {
               if ((k = v[0]) === '.' || k === '#') {
                 if (s = v.substring(1, i)) {
@@ -68,12 +69,12 @@ function context (createElement) {
 
       if (!e && typeof l === 'number' && l < common_tags.length)
         // we overwrite 'l', so it does not try and add a text node of its number to the element
-        l = parseSelector(common_tags[l])
+        l = parse_selector(common_tags[l])
 
       if (l != null)
       if (typeof l === 'string') {
         if (!e) {
-          parseSelector(l)
+          parse_selector(l)
         } else {
           e.aC(r = txt(l))
         }
