@@ -6,11 +6,11 @@ import ResizeSensor from '../dom/resize-sensor'
 import { h } from '../dom/hyper-hermes'
 import { doc, body, win, IS_LOCAL, basePath } from '../dom/dom-base'
 import { isNode, getElementById } from '../dom/dom-base'
-import { new_ctx, el_ctx } from '../dom/hyper-ctx'
+import { new_ctx, el_ctx, global_ctx } from '../dom/hyper-ctx'
 // import { makeNode } from '../dom/hyper-hermes'
 
 function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _onload, _afterload) {
-  var tmp, mutationObserver, id, G, E, width, height, _dpr, args
+  var tmp, mutationObserver, id, G, ctx, E, width, height, _dpr, args
   var C = mergeDeep({}, objJSON(_config), DEFAULT_CONFIG)
 
   if (IS_LOCAL) {
@@ -40,7 +40,13 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
 
   // this allows for custom listeners and/or styles to be added to the generated parentNode
   if (typeof parentNode === 'object' && !isNode(parentNode)) tmp = mergeDeep(tmp, parentNode)
-  frame = isNode(frame) ? frame : h('div#'+id, tmp)
+
+  G = global_ctx()
+  // frame = isNode(frame) ? frame : h('div#'+id, tmp)
+  frame = new_ctx(G, ({h}=G) => {
+    ctx = G // save the plugin frame's context
+    return isNode(frame) ? frame : h('div#'+id, tmp)
+  })
 
   if (!isNode(parentNode)) parentNode = body
   parentNode.aC(frame)
@@ -50,25 +56,25 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
   //   if (!frame.parentNode) frame.cleanup()
   // })).observe(parentNode, { childList: true })
 
-  win.G = G = frame._G = new_ctx(void 0, id)
-  G.E = E = { frame: frame, body: doc.body, win: win }
+  win.GG = frame._G = G
+  ctx.E = E = { frame: frame, body: doc.body, win: win }
 
   // @Incomplete - device orientation
   // https://crosswalk-project.org/documentation/tutorials/screens.html
   // https://developer.mozilla.org/en-US/docs/Web/API/CSS_Object_Model/Managing_screen_orientation
   tmp = screen.orientation
-  G.orientation = value(tmp.type.split('-').concat(tmp.angle))
+  G.o.orientation = value(tmp.type.split('-').concat(tmp.angle))
   tmp.onchange = function (e) { G.orientation((tmp = e.target).type.split('-').concat(tmp.angle)) }
 
   // TODO: add device motion events
   // https://developers.google.com/web/fundamentals/native-hardware/device-orientation/
 
-  G.width = value(width = frame.clientWidth || C.width || 300)
-  G.height = value(height = frame.clientHeight || C.height || 300)
-  G.resize = value({width, height})
+  G.o.width = value(width = frame.clientWidth || C.width || 300)
+  G.o.height = value(height = frame.clientHeight || C.height || 300)
+  G.o.resize = value({width, height})
 
   if ((_dpr = Math.round(win.devicePixelRatio || 1)) > 4) _dpr = 4
-  G.dpr = value(_dpr)
+  G.o.dpr = value(_dpr)
 
   frame._id = id
 
@@ -110,7 +116,7 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
   //   })
   // }
 
-  args = extend(G, { C, G, E })
+  extend(G, { C, G, E })
 
   // next thing is, `onload` should operate exactly the same as `reload`
   // it's just the function that is called which will return a working vdom.
@@ -138,7 +144,8 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
       if (typeof onload === 'function') {
         // e = makeNode(frame, onload.bind(e, args), h.cleanupFuncs)
         // frame.aC(e)
-        if (e = onload(args)) {
+        // if (e = onload(args)) {
+        if (e = new_ctx(G, onload)) {
           frame.aC(e)
           if (typeof _afterload === 'function') _afterload(frame, e)
         }
