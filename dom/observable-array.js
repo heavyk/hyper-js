@@ -80,6 +80,12 @@ export class ObservableArray extends MixinEmitter(Array) {
     return this
   }
 
+  reset (items) {
+    this.empty()
+    if (Array.isArray(items)) this.push(...items)
+    return this
+  }
+
   replace (idx, val) {
     this.emit('change', { type: 'replace', val, idx, old: this[idx] })
     super.splice(idx, 1, val)
