@@ -372,7 +372,7 @@ export class RenderingArray extends ObservableArray {
           if (fl >= 1) self._d.length = 0
           // if (fl >= 2) { for (v of self._ctx) { v.cleanup() } self._ctx.length = 0 }
           if (fl >= 3) self._idx.length = 0
-          if (min) self.push(...empty_array(min, self.empty_fn))
+          if (min) super.push(...empty_array(min, self.empty_fn))
           break
         // no args
         case 'reverse':
