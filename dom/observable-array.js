@@ -46,15 +46,16 @@ export class ObservableArray extends MixinEmitter(Array) {
 
   swap (from_idx, to_idx) {
     this.emit('change', {type: 'swap', from: from_idx, to: to_idx })
-    var el = super.splice(from_idx, 1)
-    super.splice(to_idx, 0, el[0])
+    // let el = super.splice(from_idx, 1)
+    // super.splice(to_idx, 0, el[0])
+    swap(this, to_idx, from_idx)
   }
 
   sort (compare) {
     // implementation of selection sort
     // (it's more compares, but the fewest number of swaps, which is better for dom performance)
     if (this.length <= 1) return this
-    var i = 0, j, k, a = this, l = a.length
+    let i = 0, j, k, a = this, l = a.length
     for (; i < l; i++) {
       // smallest index val
       k = i
@@ -73,7 +74,7 @@ export class ObservableArray extends MixinEmitter(Array) {
 
   shuffle () {
     for (let i = 0, len = this.length; i < len;) {
-      this.swap(array, i, Math.floor(Math.random() * (++i)))
+      this.swap(i, Math.floor(Math.random() * (++i)))
     }
   }
 
@@ -100,7 +101,7 @@ export class ObservableArray extends MixinEmitter(Array) {
 
   move (from_idx, to_idx) {
     this.emit('change', { type: 'move', from: from_idx, to: to_idx })
-    var el = super.splice(from_idx, 1)
+    let el = super.splice(from_idx, 1)
     super.splice(to_idx, 0, el[0])
     return this
   }
@@ -114,7 +115,7 @@ export class ObservableArray extends MixinEmitter(Array) {
 
   remove (idx) {
     if (typeof idx !== 'number') {
-      var iidx = this.indexOf(idx)
+      let iidx = this.indexOf(idx)
       if (~iidx) idx = iidx
       else return this
     }
@@ -150,7 +151,7 @@ export class ObservableArray extends MixinEmitter(Array) {
   //            lodash/set and lodash/invoke dependencies aren't pulled in.
   //            (it was only used once in a project from a while ago)
   // setPath (idx, path, value) {
-  //   var obj = this[idx]
+  //   let obj = this[idx]
   //   // in case it's an observable, no need to emit the event
   //   if (obj.observable === 'object') invoke(obj, path, value)
   //   else {
@@ -164,7 +165,7 @@ export class ObservableArray extends MixinEmitter(Array) {
 // this function is to replicate changes made to one obv arr to another one(s)
 export function ObservableArrayApply (oarr, ...arr) {
   oarr.on('change', (e) => {
-    var a, t
+    let a, t
     switch (e.type) {
       case 'swap':
         for (a of arr) {
@@ -264,7 +265,7 @@ export class RenderingArray extends ObservableArray {
           if ((i = e.from) < 0) i += len // -idx
           if ((j = e.to) < 0) j += len   // -idx
           if (fl >= 1) swap(self._d, j, i)
-          if (fl >= 2) swap(self._ctx, j, i)
+          // if (fl >= 2) swap(self._ctx, j, i)
           if (fl >= 3) {
             self._idx[i](j)
             self._idx[j](i)
@@ -276,7 +277,7 @@ export class RenderingArray extends ObservableArray {
           if ((i = e.from) < 0) i += len // -idx
           if ((j = e.to) < 0) j += len   // -idx
           if (fl >= 1) v = self._d.splice(i, 1), self._d.splice(j, 0, v[0])
-          if (fl >= 2) v = self._ctx.splice(i, 1), self._ctx.splice(j, 0, v[0])
+          // if (fl >= 2) v = self._ctx.splice(i, 1), self._ctx.splice(j, 0, v[0])
           if (fl >= 3) {
             v = self._idx.splice(i, 1), self._idx.splice(j, 0, v[0])
             self._idx[i](j)
@@ -401,7 +402,7 @@ export class RenderingArray extends ObservableArray {
     }
 
     if (data instanceof ObservableArray) {
-      var i = 0, len = data.length, min = +self.min || 0, _d = []
+      let i = 0, len = data.length, min = +self.min || 0, _d = []
 
       // empty / cleanup the array
       // @Optimise: technically, the array doesn't need to be emptied at all...
