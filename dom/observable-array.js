@@ -71,6 +71,12 @@ export class ObservableArray extends MixinEmitter(Array) {
     return this
   }
 
+  shuffle () {
+    for (let i = 0, len = this.length; i < len;) {
+      this.swap(array, i, Math.floor(Math.random() * (++i)))
+    }
+  }
+
   empty () {
     if (this.length > 0) {
       this.emit('change', { type: 'empty' })
