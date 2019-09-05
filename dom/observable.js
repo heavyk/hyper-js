@@ -3,7 +3,6 @@
 import { define_prop, define_props, define_value, define_getter, remove_every as compactor, error } from '@hyper/utils'
 
 // knicked from: https://github.com/dominictarr/observable/blob/master/index.js
-// mostly unmodified...
 // * exported classes
 // * remove utility functions (micro-optimization, reduces readability)
 // * change from object traversal to arrays
@@ -11,8 +10,7 @@ import { define_prop, define_props, define_value, define_getter, remove_every as
 //  * then, in remove() use `.splice` instead of `delete`. however, to avoid the case that a listener is removed from inside of a listener, the value is set to null and only compacted after 10 listeners have been removed
 // * add `._obv` property to all returned functions (necessary for hyper-hermes to know that it's an observable instead of a context)
 // * changed `value` to only propagate when the value has actually changed. to force all liseners to receive the current value, `call observable.set()` or `observable.set(observable())`
-// (TODO) use isEqual function to compare values before setting the observable (this may not be necessary actually because objects should not really be going into observables)
-// (TODO) add better documentation for each function
+// (TODO) make obj_value obv which uses `isEqual` for comparison before setting the observable
 
 export function ensure_obv (obv) {
   if (typeof obv !== 'function' || typeof obv._obv !== 'string')
@@ -29,7 +27,7 @@ export function bind1 (l, r) {
 // two-way binding: bind lhs to rhs and rhs to lhs -- starting with the rhs value
 export function bind2 (l, r) {
   l(r())
-  var remove_l = l(r), remove_r = r(l)
+  let remove_l = l(r), remove_r = r(l)
   return () => { remove_l(); remove_r() }
 }
 
@@ -37,7 +35,8 @@ export function bind2 (l, r) {
 // old_val has to come first, to allow for things using it to do something like this:
 // emit(emitters, current_val = val, current_val)
 function emit (listeners, old_val, val) {
-  for (var fn, c = 0, i = 0; i < listeners.length; i++)
+  let fn, c = 0, i = 0
+  for (; i < listeners.length; i++)
     if (typeof (fn = listeners[i]) === 'function') fn(val, old_val)
     else c++
 
@@ -47,7 +46,7 @@ function emit (listeners, old_val, val) {
 
 // remove a listener
 export function remove (array, item) {
-  var i = array.indexOf(item)
+  let i = array.indexOf(item)
   if (~i) array[i] = null // in the compactor function, we explicitly check to see if it's null.
 }
 
@@ -62,7 +61,7 @@ export function value (initial) {
   obv.v = initial
   obv.set = (val) => emit(listeners, obv.v, obv.v = val === undefined ? obv.v : val)
   obv.once = (fn, do_immediately) => {
-    var remove = obv((val, prev) => {
+    let remove = obv((val, prev) => {
       fn(val, prev)
       remove()
     }, do_immediately)
@@ -91,14 +90,14 @@ export function obv_obj (initialValue, _keys) {
   // this kind of needs a little more thought, I think :)
   if (initialValue && initialValue._obv === 'object') return initialValue
 
-  var obj = {}
-  var obvs = {}
-  var keys = []
-  var props = {
+  let obj = {}
+  let obvs = {}
+  let keys = []
+  let props = {
     _obv: define_value('object'),
     // TODO: implement get/set,on/off for compatibility with scuttlebutt?
     get: define_value((path, default_value) => {
-      var o = obj, p, paths = Array.isArray(path) ? path
+      let o = obj, p, paths = Array.isArray(path) ? path
         : typeof path === 'string' && ~path.indexOf('.') ? path.split('.')
         : [path]
 
@@ -187,9 +186,9 @@ export function transform (obv, down, up) {
 // transform an array of obvs
 if (DEBUG) var COMPUTE_LISTENERS = 0
 export function compute (obvs, compute_fn) {
-  var is_init = true, len = obvs.length
-  var obv_vals = new Array(len)
-  var listeners = [], removables = [], fn
+  let is_init = true, len = obvs.length
+  let obv_vals = new Array(len)
+  let listeners = [], removables = [], fn
 
   // the `let` is important here, as it makes a scoped variable used inside the listener attached to the obv. (var won't work)
   for (let i = 0; i < len; i++) {
@@ -197,7 +196,7 @@ export function compute (obvs, compute_fn) {
     if (typeof fn === 'function') {
       if (DEBUG) ensure_obv(fn)
       removables.push(fn((v) => {
-        var prev = obv_vals[i]
+        let prev = obv_vals[i]
         obv_vals[i] = v
         if (prev !== v && is_init === false) obv(compute_fn.apply(null, obv_vals))
       }, is_init))
@@ -237,8 +236,8 @@ export function compute (obvs, compute_fn) {
 }
 
 export function calc (obvs, compute_fn) {
-  var len = obvs.length, fn
-  var obv_vals = new Array(len)
+  let len = obvs.length, fn
+  let obv_vals = new Array(len)
 
   // the `let` is important here, as it makes a scoped variable used inside the listener attached to the obv. (var won't work)
   for (let i = 0; i < len; i++) {
