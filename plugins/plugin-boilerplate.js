@@ -64,7 +64,7 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
   // https://developer.mozilla.org/en-US/docs/Web/API/CSS_Object_Model/Managing_screen_orientation
   tmp = screen.orientation
   G.o.orientation = value(tmp.type.split('-').concat(tmp.angle))
-  tmp.onchange = function (e) { G.orientation((tmp = e.target).type.split('-').concat(tmp.angle)) }
+  tmp.onchange = (e) => { G.o.orientation((tmp = e.target).type.split('-').concat(tmp.angle)) }
 
   // TODO: add device motion events
   // https://developers.google.com/web/fundamentals/native-hardware/device-orientation/
