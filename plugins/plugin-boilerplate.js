@@ -152,9 +152,9 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
       }
 
       resize = new ResizeSensor(frame, () => {
-        G.width(width = frame.clientWidth)
-        G.height(height = frame.clientHeight)
-        G.resize({width, height})
+        G.o.width(width = frame.clientWidth)
+        G.o.height(height = frame.clientHeight)
+        G.o.resize({width, height})
       })
       G.cleanupFuncs.push(() => resize.detach())
     }
