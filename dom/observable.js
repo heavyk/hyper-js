@@ -1,6 +1,7 @@
 'use strict'
 
 import { define_prop, define_props, define_value, define_getter, remove_every as compactor, error } from '@hyper/utils'
+import { emit, remove } from '@hyper/listeners'
 
 // knicked from: https://github.com/dominictarr/observable/blob/master/index.js
 // * exported classes
@@ -10,7 +11,7 @@ import { define_prop, define_props, define_value, define_getter, remove_every as
 //  * then, in remove() use `.splice` instead of `delete`. however, to avoid the case that a listener is removed from inside of a listener, the value is set to null and only compacted after 10 listeners have been removed
 // * add `._obv` property to all returned functions (necessary for hyper-hermes to know that it's an observable instead of a context)
 // * changed `value` to only propagate when the value has actually changed. to force all liseners to receive the current value, `call observable.set()` or `observable.set(observable())`
-// (TODO) make obj_value obv which uses `isEqual` for comparison before setting the observable
+
 
 export function ensure_obv (obv) {
   if (typeof obv !== 'function' || typeof obv._obv !== 'string')
@@ -29,25 +30,6 @@ export function bind2 (l, r) {
   l(r())
   let remove_l = l(r), remove_r = r(l)
   return () => { remove_l(); remove_r() }
-}
-
-// trigger all listeners
-// old_val has to come first, to allow for things using it to do something like this:
-// emit(emitters, current_val = val, current_val)
-function emit (listeners, old_val, val) {
-  let fn, c = 0, i = 0
-  for (; i < listeners.length; i++)
-    if (typeof (fn = listeners[i]) === 'function') fn(val, old_val)
-    else c++
-
-  // if there are RUN_COMPACTOR_NULLS or more null values, compact the array on next tick
-  if (c > RUN_COMPACTOR_NULLS) setTimeout(compactor, 1, listeners)
-}
-
-// remove a listener
-export function remove (array, item) {
-  let i = array.indexOf(item)
-  if (~i) array[i] = null // in the compactor function, we explicitly check to see if it's null.
 }
 
 // An observable that stores a value.
@@ -84,6 +66,7 @@ export function value (initial) {
 
 
 // an observable object
+// @Incomplete: find a solution here because this isn't necessarily possible to be used with `pure_getters`
 export function obv_obj (initialValue, _keys) {
   // if the value is already an observable, then just return it
   // this is actually incorrect, because maybe we want a new object that observes different keys
