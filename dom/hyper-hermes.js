@@ -9,7 +9,6 @@
 
 import { is_obv } from './observable'
 import { observe, add_event } from './observable-event'
-import { el_cleanup } from './hyper-ctx'
 import { define_prop, array_idx, define_value, error } from '../utils'
 
 import { win, doc, customElements } from './dom-base'
@@ -457,15 +456,13 @@ export const obvNode = (e, v, cleanupFuncs = []) => {
   return r
 }
 
-const Node_prototype = Node.prototype
+export const Node_prototype = Node.prototype
 // shortcut to append multiple children (w/ cleanupFuncs)
 Node_prototype.iB = function (el, ref, cleanupFuncs) { return this.insertBefore(obvNode(this, el, cleanupFuncs), ref) }
 // shortcut to append multiple children (w/ cleanupFuncs)
 Node_prototype.aC = function (el, cleanupFuncs) { return this.appendChild(isNode(el) ? el : obvNode(this, el, cleanupFuncs)) }
 // shortcut to removeChild
 Node_prototype.rC = function (child) { return this.removeChild(child) }
-// shortcut to remove myself from the dom (and cleanup if it's got nodes)
-Node_prototype.rm = function () { return el_cleanup(this), this.remove() }
 // shortcut to apply attributes as if they were the second argument to `h('.lala', {these ones}, ...)`
 Node_prototype.apply = function (obj, cleanupFuncs) {
   for (let k in obj) set_attr(this, k, obj[k], cleanupFuncs)

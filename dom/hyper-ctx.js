@@ -86,3 +86,8 @@ export function new_ctx (G = global_ctx(), fn, ...args) {
 
   return el
 }
+
+import { Node_prototype } from '@hyper/dom/hyper-hermes'
+
+// shortcut to remove myself from the dom (and cleanup if it's got nodes)
+Node_prototype.rm = function () { return el_cleanup(this), this.remove() }

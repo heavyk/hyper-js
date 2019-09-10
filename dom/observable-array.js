@@ -1,5 +1,5 @@
 import MixinEmitter from '@lib/drip/MixinEmitter'
-import { value, obv_obj, observable_property } from '@lib/dom/observable'
+import { value, obv_obj } from '@lib/dom/observable'
 import { empty_array, swap, define_prop, define_getter } from '@lib/utils'
 import { new_ctx } from '@lib/dom/hyper-ctx'
 import isEqual from '@lib/isEqual'
