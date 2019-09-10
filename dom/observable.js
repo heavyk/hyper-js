@@ -55,7 +55,9 @@ export function value (initial) {
   function obv (val, do_immediately) {
     return (
       val === undefined ? obv.v                                                               // getter
-    : typeof val !== 'function' ? (obv.v === val ? undefined : emit(listeners, obv.v, obv.v = val), val) // setter only sets if the value has changed (won't work for byref things like objects or arrays)
+    : typeof val !== 'function' ? (obv.v === val ? undefined :
+      (DEBUG && (typeof val === 'object' && Object.prototype.toString.call(val) === '[object Object]') && error('use obv/obj_value to store plain objects (it properly deep compares them)')),
+      emit(listeners, obv.v, obv.v = val), val) // setter only sets if the value has changed (won't work for byref things like objects or arrays)
     : (listeners.push(val), (DEBUG && VALUE_LISTENERS++), (obv.v === undefined || do_immediately === false ? obv.v : val(obv.v)), () => {                 // listener
         remove(listeners, val)
         DEBUG && VALUE_LISTENERS--
