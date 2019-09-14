@@ -1,9 +1,9 @@
-import { value, number, transform, compute, observable_property } from '../dom/observable'
-import { prompter } from '../dom/observable-logic'
-import { ObservableArray } from '../dom/observable-array'
+import { value, number, transform, compute, observable_property } from '@hyper/dom/observable'
+import { prompter } from '@hyper/dom/observable-logic'
+import { ObservableArray } from '@hyper/dom/observable-array'
 import { rankHandInt } from './rank-hand'
 import { shuffled_deck } from './deck'
-import round from '../lodash/round'
+import round from '@lodash/round'
 
 class Playa {
   constructor (name, chips) {

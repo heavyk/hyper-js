@@ -1,4 +1,4 @@
-import h from '../dom/hyper-hermes'
+import h from '@hyper/dom/hyper-hermes'
 
 function floatingTip (node, text, width) {
   if (text === undefined) return { teardown () {} }

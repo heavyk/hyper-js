@@ -1,6 +1,6 @@
 import fetch from 'isomorphic-fetch'
 import { polyfill } from 'es6-promise'
-import assign from '../lib/lodash/assign'
+import assign from '@hyper/lib/lodash/assign'
 
 const defaultHeaders = {
   Accept: 'application/json',

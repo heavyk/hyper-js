@@ -1,7 +1,7 @@
-import { value } from '../lib/dom/observable'
-import { comment } from '../lib/dom/dom-base'
-import { new_ctx, el_ctx } from '../lib/dom/hyper-ctx'
-import { random_id, __debug } from '../lib/utils'
+import { value } from '@hyper/lib/dom/observable'
+import { comment } from '@hyper/lib/dom/dom-base'
+import { new_ctx, el_ctx } from '@hyper/lib/dom/hyper-ctx'
+import { random_id, __debug } from '@hyper/lib/utils'
 
 // I have been considering using the dom for the ctx lookup,
 // recursively looking up the heierarchy for something like ._ctx (see `el_ctx`)

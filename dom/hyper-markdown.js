@@ -17,7 +17,7 @@
 // instead of using crc32 as the codeblocks key, it may nice (and smaller) to have the original code used as the key
 // codeblocks[code] = redered_html
 // then, crc32 is no longer necessary
-const crc32 = require('../hash/crc32')
+const crc32 = require('@hyper/hash/crc32')
 
 const regex_headline = /^(\#{1,6})([^\#\n]+)$/m
 const regex_code = /\s\`\`\`\n?([^`]+)\`\`\`/g

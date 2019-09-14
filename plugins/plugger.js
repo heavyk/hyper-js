@@ -1,5 +1,5 @@
-import { pluginBoilerplate } from '../plugins/plugin-boilerplate'
-import { error } from '../utils'
+import { pluginBoilerplate } from '@hyper/plugins/plugin-boilerplate'
+import { error } from '@hyper/utils'
 
 function plugger (starting_panel, C = {}, D = {}) {
   const name = starting_panel.name
@@ -21,7 +21,7 @@ function plugger (starting_panel, C = {}, D = {}) {
 }
 
 // this should't be here:
-// import { win } from '../dom/dom-base'
+// import { win } from '@hyper/dom/dom-base'
 // win.plugger = plugger
 
 export default plugger

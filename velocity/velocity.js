@@ -1,7 +1,7 @@
 /*! VelocityJS.org (1.2.3). (C) 2014 Julian Shapiro. MIT @license: en.wikipedia.org/wiki/MIT_License */
 
 import $ from './jquery-shim'
-import hexToRgb from '../color/hexToRgb'
+import hexToRgb from '@hyper/color/hexToRgb'
 
 /******************
     Velocity.js
@@ -2855,7 +2855,7 @@ Velocity.animate = animate
     Timing
 **************/
 
-import requestAnimationFrame from '../dom/request-animation-frame'
+import requestAnimationFrame from '@hyper/dom/request-animation-frame'
 /* Ticker function. */
 var ticker = requestAnimationFrame
 

@@ -1,4 +1,4 @@
-import { panel_fixture } from '../testing'
+import { panel_fixture } from '@hyper/testing'
 
 function select_option ({G, C, h, t, c, v, m}) {
   var selected = v()

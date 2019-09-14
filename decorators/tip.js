@@ -1,5 +1,5 @@
 
-import h from '../dom/hyper-hermes'
+import h from '@hyper/dom/hyper-hermes'
 
 function tip (node, text, offset) {
   offset = offset || 5

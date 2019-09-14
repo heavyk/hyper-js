@@ -3,7 +3,7 @@
  * usage: decorator="combine:{decorator1:[param1, param2], decorator2:param}"
  */
 
-import clone from '../lodash/lang/cloneDeep'
+import clone from '@lodash/lang/cloneDeep'
 
 function combine (node, data) {
   var decoratorName, decorator, parameters

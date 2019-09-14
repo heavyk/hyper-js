@@ -3,7 +3,7 @@ pull.drain = require('pull-stream/sinks/drain')
 var Pause = require('pull-pause')
 // var Obv = require('obv')
 
-import Obv from '../dom/observable'
+import Obv from '@hyper/dom/observable'
 
 var next = 'undefined' === typeof setImmediate ? setTimeout : setImmediate
 var buffer = Math.max(window.innerHeight * 2, 1000)

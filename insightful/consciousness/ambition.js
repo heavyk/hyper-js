@@ -1,5 +1,5 @@
 
-// var Conductor = require('../conductor')
+// var Conductor = require('@hyper/conductor')
 // var daFunk = require('da-funk')
 var slice = [].slice
 

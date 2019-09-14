@@ -9,7 +9,7 @@
 
 import { is_obv } from './observable'
 import { observe, add_event } from './observable-event'
-import { define_prop, array_idx, define_value, error } from '../utils'
+import { define_prop, array_idx, define_value, error } from '@hyper/utils'
 
 import { win, doc, customElements } from './dom-base'
 import { isNode, txt, comment } from './dom-base'

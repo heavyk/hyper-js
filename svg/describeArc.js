@@ -1,4 +1,4 @@
-import polarToCartesian from '../calc/polarToCartesian'
+import polarToCartesian from '@hyper/calc/polarToCartesian'
 
 
 export default function describeArc(x, y, radius, startAngle, endAngle){

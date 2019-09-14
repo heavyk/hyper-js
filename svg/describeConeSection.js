@@ -1,4 +1,4 @@
-import polarToCartesian from '../calc/polarToCartesian'
+import polarToCartesian from '@hyper/calc/polarToCartesian'
 
 
 export default function describeConeSection(x, y, radius, radius2, start_angle, end_angle) {

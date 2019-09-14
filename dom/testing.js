@@ -1,12 +1,12 @@
-import { error } from '../../lib/utils'
-import PromiseQueue from '../../lib/promise-queue'
+import { error } from '@hyper/lib/utils'
+import PromiseQueue from '@hyper/lib/promise-queue'
 
-import pluginBoilerplate from '../../lib/plugins/plugin-boilerplate'
-import { h as hh } from '../../lib/dom/hyper-hermes'
-import { doc, body } from '../../lib/dom/dom-base'
-import { value, transform, compute } from '../../lib/dom/observable'
-import { attribute } from '../../lib/dom/observable-event'
-import requestAnimationFrame from '../../lib/dom/request-animation-frame'
+import pluginBoilerplate from '@hyper/lib/plugins/plugin-boilerplate'
+import { h as hh } from '@hyper/lib/dom/hyper-hermes'
+import { doc, body } from '@hyper/lib/dom/dom-base'
+import { value, transform, compute } from '@hyper/lib/dom/observable'
+import { attribute } from '@hyper/lib/dom/observable-event'
+import requestAnimationFrame from '@hyper/lib/dom/request-animation-frame'
 
 // YUCK! someday remove (and use simulant) or improve syn
 const syn = require('syn')

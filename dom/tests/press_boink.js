@@ -1,4 +1,4 @@
-import { panel_fixture } from '../testing'
+import { panel_fixture } from '@hyper/testing'
 
 function press_boink ({G, C, h, t, c, v, m}) {
   var boinked = v(false)

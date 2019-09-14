@@ -1,4 +1,4 @@
-import { value, transform, remove } from '../dom/observable'
+import { value, transform, remove } from '@hyper/dom/observable'
 
 export const _not = (v) => !v
 export const not = (observable) => transform(observable, _not)

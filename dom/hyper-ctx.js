@@ -5,8 +5,8 @@ import { h, s } from '@hyper/dom/hyper-hermes'
 import { doc, getElementById, isNode } from '@hyper/dom/dom-base'
 
 // default obv functions provided
-import { value, transform, compute } from '../dom/observable'
-import { update_obv } from '../dom/observable-event'
+import { value, transform, compute } from '@hyper/dom/observable'
+import { update_obv } from '@hyper/dom/observable-event'
 
 // I'm not sure this is the best way to do this...
 // since it's the global context, should it be cached somewhere?

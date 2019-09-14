@@ -1,13 +1,13 @@
-import { mergeDeep, objJSON, random_id, extend } from '../utils'
+import { mergeDeep, objJSON, random_id, extend } from '@hyper/utils'
 
-import { value } from '../dom/observable'
-import ResizeSensor from '../dom/resize-sensor'
+import { value } from '@hyper/dom/observable'
+import ResizeSensor from '@hyper/dom/resize-sensor'
 
-import { h } from '../dom/hyper-hermes'
-import { doc, body, win, IS_LOCAL, basePath } from '../dom/dom-base'
-import { isNode, getElementById } from '../dom/dom-base'
-import { new_ctx, el_ctx, global_ctx } from '../dom/hyper-ctx'
-// import { makeNode } from '../dom/hyper-hermes'
+import { h } from '@hyper/dom/hyper-hermes'
+import { doc, body, win, IS_LOCAL, basePath } from '@hyper/dom/dom-base'
+import { isNode, getElementById } from '@hyper/dom/dom-base'
+import { new_ctx, el_ctx, global_ctx } from '@hyper/dom/hyper-ctx'
+// import { makeNode } from '@hyper/dom/hyper-hermes'
 
 function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _onload, _afterload) {
   var tmp, mutationObserver, id, G, ctx, E, width, height, _dpr, args

@@ -1,4 +1,4 @@
-import { panel_fixture } from '../testing'
+import { panel_fixture } from '@hyper/testing'
 
 function word_input ({G, C, h, t, c, v, m}) {
   var w1 = v(), w2 = v()

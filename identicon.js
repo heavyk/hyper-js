@@ -1,8 +1,8 @@
-import { mergeDeep, each } from '../lib/utils'
-import hsl2rgb from '../lib/color/hsl2rgb'
-import rgba2color from '../lib/color/rgba2color'
-import { hex } from '../lib/parse/number'
-import { h, s } from '../lib/dom/hyper-hermes'
+import { mergeDeep, each } from '@hyper/lib/utils'
+import hsl2rgb from '@hyper/lib/color/hsl2rgb'
+import rgba2color from '@hyper/lib/color/rgba2color'
+import { hex } from '@hyper/lib/parse/number'
+import { h, s } from '@hyper/lib/dom/hyper-hermes'
 
 // knicked from http://github.com/stewartlord/identicon.js
 // removed png rendering and implemented svg rendering as default
