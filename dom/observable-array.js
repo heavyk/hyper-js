@@ -88,6 +88,7 @@ export class ObservableArray extends MixinEmitter(Array) {
   }
 
   reset (items) {
+    // this should be smarter. it should only do the differenc between this and items
     this.empty()
     if (Array.isArray(items)) this.push(...items)
     return this
@@ -163,7 +164,7 @@ export class ObservableArray extends MixinEmitter(Array) {
 }
 
 // this function is to replicate changes made to one obv arr to another one(s)
-export function ObservableArrayApply (oarr, ...arr) {
+export function ObservableArrayApplies (oarr, ...arr) {
   oarr.on('change', (e) => {
     let a, t
     switch (e.type) {
@@ -215,6 +216,58 @@ export function ObservableArrayApply (oarr, ...arr) {
         break
     }
   })
+}
+
+export function ObservableArrayChange (arr, evt, t) {
+  switch (evt.type) {
+    case 'swap':
+      t = arr[evt.to]
+      arr[evt.to] = arr[evt.from]
+      arr[evt.from] = t
+      break
+    case 'move':
+      t = arr.splice(evt.from, 1)
+      arr.splice(evt.to, 0, t[0])
+      break
+    case 'set':
+      t = arr[evt.idx]
+      arr[evt.idx] = evt.val
+      break
+    case 'unshift':
+      arr.unshift(...evt.values)
+      break
+    case 'push':
+      arr.push(...evt.values)
+      break
+    case 'splice':
+      arr.splice(evt.idx, evt.remove, ...evt.add)
+      break
+    case 'remove':
+      arr.splice(evt.idx, 1)
+      break
+    case 'replace':
+      arr.splice(evt.idx, 1, evt.val)
+      break
+    case 'insert':
+      arr.splice(evt.idx, 0, evt.val)
+      break
+    case 'sort':
+      arr.sort(evt.compare)
+      break
+    case 'empty':
+      arr.length = 0
+      break
+    // no args
+    case 'pop':
+    case 'reverse':
+    case 'shift':
+      arr[evt.type]()
+      break
+  }
+}
+
+export function ObservableArrayApply (oarr, arr) {
+  oarr.on('change', (evt) => ObservableArrayChange(oarr, evt))
 }
 
 
