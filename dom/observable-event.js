@@ -139,14 +139,14 @@ export function add_event (e, event, listener, opts) {
 // https://www.html5rocks.com/en/mobile/touchandmouse/
 // https://www.html5rocks.com/en/mobile/touch/
 // look into `passive: true` as a replacement for the `preventDefault` functionality.
-export function do_boink (el, obv, opts) {
+export function boink (el, obv, opts) {
   this.push(
     listen(el, 'click', false, (ev) => { is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts),
     listen(el, 'touchstart', false, (ev) => { prevent_default(ev); is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts)
   )
 }
 
-export function do_press (el, obv, pressed = true, normal = false) {
+export function press (el, obv, pressed = true, normal = false) {
   this.push(
     listen(el, 'mouseup', false, () => { obv(normal) }),
     listen(el, 'mousedown', false, () => { obv(pressed) }),
@@ -187,10 +187,10 @@ export function observe (el, observe_obj) {
         )
         break
       case 'boink':
-        do_boink.call(cleanupFuncs, el, v)
+        boink.call(cleanupFuncs, el, v)
         break
       case 'press':
-        do_press.call(cleanupFuncs, el, v)
+        press.call(cleanupFuncs, el, v)
         break
       default:
       // case 'keyup':
