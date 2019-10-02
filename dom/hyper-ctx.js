@@ -6,6 +6,7 @@ import { doc, getElementById, isNode } from '@hyper/dom/dom-base'
 
 // default obv functions provided
 import { value, transform, compute } from '@hyper/dom/observable'
+import obj_value from '@hyper/obv/obj_value'
 import { update_obv } from '@hyper/dom/observable-event'
 
 // I'm not sure this is the best way to do this...
@@ -17,7 +18,13 @@ export function global_ctx () {
     _id:0, ERROR: 'THIS IS THE GLOBAL CTX',
     o: {},
     h, s,
-    v: value, t: transform, c: compute, m: update_obv
+    // base obv functions
+    // @Incomplete: sometime make these optional
+    v: value,
+    t: transform,
+    c: compute,
+    m: update_obv,
+    V: obj_value,
   }, (_ctx) => {
     // ctx = _ctx
     return doc.head.aC(h('meta#global_ctx'))

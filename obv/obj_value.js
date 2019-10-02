@@ -1,12 +1,12 @@
-import { is_equal } from '@hyper/utils'
+import is_equal from '@hyper/isEqual'
 import { define_prop } from '@hyper/utils'
 import { remove_every as compactor } from '@hyper/utils'
 
-import { emit, remove } from '@hyper/dom/observable' // these should be moved to @
+import { emit, remove } from '@hyper/listeners'
 
 // An observable that stores an object value and uses does a deep object comparison.
 if (DEBUG) var OBJ_VALUE_LISTENERS = 0
-export function obj_value (initial) {
+export default function obj_value (initial) {
   let listeners = []
   // if the value is already an observable, then just return it
   if (typeof initial === 'function' && initial._obv === 'value') return initial

@@ -1,6 +1,7 @@
 import { mergeDeep, objJSON, random_id, extend } from '@hyper/utils'
 
 import { value } from '@hyper/dom/observable'
+import obj_value from '@hyper/obv/obj_value'
 import ResizeSensor from '@hyper/dom/resize-sensor'
 
 import { h } from '@hyper/dom/hyper-hermes'
@@ -71,7 +72,7 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
 
   G.o.width = value(width = frame.clientWidth || C.width || 300)
   G.o.height = value(height = frame.clientHeight || C.height || 300)
-  G.o.resize = value({width, height})
+  G.o.resize = obj_value({width, height})
 
   if ((_dpr = Math.round(win.devicePixelRatio || 1)) > 4) _dpr = 4
   G.o.dpr = value(_dpr)
