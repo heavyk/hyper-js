@@ -365,7 +365,7 @@ export class RenderingArray extends ObservableArray {
           if (fl >= 3) self._idx.length = i
           i = Math.min(i, min) - len
           for (v of e.values) t.push(self.fn_call(v, len++))
-          if (i) super.splice(j, i, ...t)
+          if (i > 0) super.splice(j, i, ...t)
           else super.push(...t)
           break
         case 'splice':
