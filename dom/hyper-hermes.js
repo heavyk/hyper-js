@@ -140,7 +140,7 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
         // however, as mentioned in this article it may be desirable to use property access instead
         // https://stackoverflow.com/questions/22151560/what-is-happening-behind-setattribute-vs-attribute
         // observable (write-only) value
-        cleanupFuncs.push(v((v) => {
+        cleanupFuncs.push(v.call(e, (v) => {
           set_attr(e, k, v, cleanupFuncs)
         }, 1)) // 1 = do_immediately
         s = e.nodeName
