@@ -376,7 +376,7 @@ export class RenderingArray extends ObservableArray {
           if (fl >= 1) self._d.splice(i, j, ...v)
           // if (fl >= 2) t = self._ctx.splice(i, j, ...v)
           if (fl >= 3) self._idx.splice(i, j, ...v)
-          for (v of t) v.cleanup()
+          // for (v of t) v.cleanup()
           t = [] // temp array to save rendered elements
           len += k - j
           k = i
@@ -414,7 +414,6 @@ export class RenderingArray extends ObservableArray {
             if (fl >= 3) for (; i <= len; i++) self._idx[i](i)   // insert: update the indexes
             if (len <= min) super.pop()
           }
-
           break
         case 'sort':
           t = []
