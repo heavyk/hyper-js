@@ -3,8 +3,8 @@ import isObject from './lodash/isObject'
 
 export function noop () {}
 
-export function error (message) {
-  throw new Error(message)
+export function error (message, type = Error) {
+  throw new type(message)
 }
 
 export function __debug (msg) {
