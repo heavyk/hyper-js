@@ -24,7 +24,6 @@ export default function toaster (G, toast_zone_style) {
   }
 
   toast_zone.toast = (msg, seconds = 3, ease = 'ease-in', animation = 'toasted') => {
-
     let el = h('.toast', {
       boink: () => { el.style.display = 'none' },
       style: {animation: `${animation} .1s ${eases[ease] || ease}`}
@@ -38,6 +37,7 @@ export default function toaster (G, toast_zone_style) {
     return el
   }
 
+  toast_zone.remove = remove
   toast_zone.clear = () => {
     each(toasts, remove)
   }
