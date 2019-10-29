@@ -18,11 +18,15 @@
 .toast {
   opacity: 1;
   transition: opacity .4s ease-in;
-  user-select: none;
+  user-select: none; /* not sure if this should be default or not? */
+  position: relative;
 
-  background: #000;
-  padding: 10px 5px;
-  border-top: solid 9px #fff;
+  /* no background. the user can add it. */
+  /* background: #000; */
+  /* no padding. the user can add it */
+  /* padding: 10px 5px; */
+  /* no border. same thing: the user should add it. */
+  /* border-top: solid 9px #fff; */
 }
 
 
