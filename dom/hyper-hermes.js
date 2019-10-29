@@ -224,8 +224,8 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
         // however, it is worth noting that setAttribute is about 30% slower than setting the property directly
         // https://jsperf.com/setattribute-vs-property-assignment/7
         // it's likely a not-null check for e.namespaceURI is less overhead than using setAttribute for everyone
-        if (e.namespaceURI) e.setAttribute(short_attrs_rev[k] || k, v)
-        else e[k] = v
+        if (doc.isDefaultNamespace(e.namespaceURI)) e[k] = v
+        else e.setAttribute(short_attrs_rev[k] || k, v)
       }
     }
   }
