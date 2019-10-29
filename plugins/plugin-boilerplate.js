@@ -5,7 +5,7 @@ import obj_value from '@hyper/obv/obj_value'
 import ResizeSensor from '@hyper/dom/resize-sensor'
 
 import { h } from '@hyper/dom/hyper-hermes'
-import { doc, body, win, IS_LOCAL, basePath } from '@hyper/dom/dom-base'
+import { doc, body, win, basePath } from '@hyper/dom/dom-base'
 import { isNode, getElementById } from '@hyper/dom/dom-base'
 import { new_ctx, el_ctx, global_ctx } from '@hyper/dom/hyper-ctx'
 // import { makeNode } from '@hyper/dom/hyper-hermes'
@@ -13,13 +13,6 @@ import { new_ctx, el_ctx, global_ctx } from '@hyper/dom/hyper-ctx'
 function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _onload, _afterload) {
   var tmp, mutationObserver, id, G, ctx, E, width, height, _dpr, args
   var C = mergeDeep({}, objJSON(_config), DEFAULT_CONFIG)
-
-  if (IS_LOCAL) {
-    tmp = body.style
-    tmp.background = '#fff'
-    tmp.fontFamily = 'Helvetica Neue,Helvetica,Arial,sans-serif'
-    tmp.padding = tmp.margin = 0
-  }
 
   // if a string is provided for the frame, try and find the frame by id, else make a fixud position full-size frame
   id = typeof frame === 'string'
@@ -168,6 +161,6 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
 }
 
 // re-exported
-export { doc, body, win, IS_LOCAL }
+export { doc, body, win }
 export { pluginBoilerplate }
 export default pluginBoilerplate
