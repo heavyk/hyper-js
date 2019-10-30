@@ -20,15 +20,17 @@ export class ObservableArray extends MixinEmitter(Array) {
   pop () {
     if (!this.length) return
     this.emit('change', { type: 'pop' })
-    if (this._obv_len) this._obv_len(this.length - 1)
-    return super.pop()
+    let ret = super.pop()
+    if (this._obv_len) this._obv_len(this.length)
+    return ret
   }
 
   push (...items) {
     if (!items.length) return this.length
     this.emit('change', { type: 'push', values: items })
-    if (this._obv_len) this._obv_len(this.length + items.length)
-    return super.push(...items)
+    let ret = super.push(...items)
+    if (this._obv_len) this._obv_len(this.length)
+    return ret
   }
 
   reverse () {
@@ -40,8 +42,9 @@ export class ObservableArray extends MixinEmitter(Array) {
   shift () {
     if (!this.length) return
     this.emit('change', { type: 'shift' })
-    if (this._obv_len) this._obv_len(this.length - 1)
-    return super.shift()
+    let ret = super.shift()
+    if (this._obv_len) this._obv_len(this.length)
+    return ret
   }
 
   swap (from_idx, to_idx) {
@@ -81,8 +84,8 @@ export class ObservableArray extends MixinEmitter(Array) {
   empty () {
     if (this.length > 0) {
       this.emit('change', { type: 'empty' })
-      if (this._obv_len) this._obv_len(0)
       this.length = 0
+      if (this._obv_len) this._obv_len(0)
     }
     return this
   }
@@ -109,8 +112,8 @@ export class ObservableArray extends MixinEmitter(Array) {
 
   insert (idx, val) {
     this.emit('change', { type: 'insert', val, idx })
-    if (this._obv_len) this._obv_len(this.length + 1)
     super.splice(idx, 0, val)
+    if (this._obv_len) this._obv_len(this.length)
     return this
   }
 
@@ -121,23 +124,25 @@ export class ObservableArray extends MixinEmitter(Array) {
       else return this
     }
     this.emit('change', { type: 'remove', idx })
-    if (this._obv_len) this._obv_len(this.length - 1)
     super.splice(idx, 1)
+    if (this._obv_len) this._obv_len(this.length)
     return this
   }
 
   splice (idx, remove, ...add) {
     if (idx === undefined || (remove !== undefined && (+idx >= this.length || +remove <= 0))) return []
     this.emit('change', { type: 'splice', idx, remove, add })
-    if (this._obv_len) this._obv_len(this.length + add.length - remove)
-    return super.splice(idx, remove, ...add)
+    let ret = super.splice(idx, remove, ...add)
+    if (this._obv_len) this._obv_len(this.length)
+    return ret
   }
 
   unshift (...items) {
     if (!items.length) return this.length
     this.emit('change', { type: 'unshift', values: items })
+    let ret = super.unshift(...items)
     if (this._obv_len) this._obv_len(this.length + items.length)
-    return super.unshift(...items)
+    return ret
   }
 
   set (idx, val) {
