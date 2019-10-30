@@ -7,7 +7,6 @@ export default function side_panel_setup (G, side_panel_style, title, content) {
   const {h} = G
   let closer = open_close()
 
-
   let side_panel =
   h('.side-panel.closed', {
     boink: closer.toggle,
