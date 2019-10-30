@@ -1,6 +1,6 @@
 import MixinEmitter from '@lib/drip/MixinEmitter'
 import { value, obv_obj } from '@lib/dom/observable'
-import { empty_array, swap, define_prop, define_getter } from '@lib/utils'
+import { empty_array, extend, swap, define_prop, define_getter } from '@lib/utils'
 import { new_ctx } from '@lib/dom/hyper-ctx'
 import isEqual from '@lib/isEqual'
 // import invoke from '@lib/lodash/invoke'
@@ -289,8 +289,9 @@ export function ObservableArrayApply (oarr, arr) {
 //   min: [number] - render at least n items always. for items that are empty, call opts.empty_fn instead
 //   empty_fn: [function] - @Incomplete: should receive (idx).
 export class RenderingArray extends ObservableArray {
-  constructor (G, data, fn, opts = { plain: true }) {
+  constructor (G, data, fn, opts = {}) {
     super()
+    opts = extend({ plain: true }, opts)
     this.fn = typeof data === 'function' ? (fn = data) : fn
     let k, fl = this.fl = fn.length
     this.G = G
