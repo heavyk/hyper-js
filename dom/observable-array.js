@@ -12,7 +12,7 @@ export class ObservableArray extends MixinEmitter(Array) {
   constructor (array) {
     super()
     this.observable = 'array'
-    if (this._obv_len) this._obv_len(this.length)
+    this._up()
     define_prop(this, 'obv_len', define_getter(() => this._obv_len || (this._obv_len = value(this.length))))
     if (Array.isArray(array) && array.length) super.push(...array)
   }
@@ -21,7 +21,7 @@ export class ObservableArray extends MixinEmitter(Array) {
     if (!this.length) return
     this.emit('change', { type: 'pop' })
     let ret = super.pop()
-    if (this._obv_len) this._obv_len(this.length)
+    this._up()
     return ret
   }
 
@@ -29,7 +29,7 @@ export class ObservableArray extends MixinEmitter(Array) {
     if (!items.length) return this.length
     this.emit('change', { type: 'push', values: items })
     let ret = super.push(...items)
-    if (this._obv_len) this._obv_len(this.length)
+    this._up()
     return ret
   }
 
@@ -43,7 +43,7 @@ export class ObservableArray extends MixinEmitter(Array) {
     if (!this.length) return
     this.emit('change', { type: 'shift' })
     let ret = super.shift()
-    if (this._obv_len) this._obv_len(this.length)
+    this._up()
     return ret
   }
 
@@ -85,7 +85,7 @@ export class ObservableArray extends MixinEmitter(Array) {
     if (this.length > 0) {
       this.emit('change', { type: 'empty' })
       this.length = 0
-      if (this._obv_len) this._obv_len(0)
+      this._up()
     }
     return this
   }
@@ -113,7 +113,7 @@ export class ObservableArray extends MixinEmitter(Array) {
   insert (idx, val) {
     this.emit('change', { type: 'insert', val, idx })
     super.splice(idx, 0, val)
-    if (this._obv_len) this._obv_len(this.length)
+    this._up
     return this
   }
 
@@ -125,7 +125,7 @@ export class ObservableArray extends MixinEmitter(Array) {
     }
     this.emit('change', { type: 'remove', idx })
     super.splice(idx, 1)
-    if (this._obv_len) this._obv_len(this.length)
+    this._up()
     return this
   }
 
@@ -133,7 +133,7 @@ export class ObservableArray extends MixinEmitter(Array) {
     if (idx === undefined || (remove !== undefined && (+idx >= this.length || +remove <= 0))) return []
     this.emit('change', { type: 'splice', idx, remove, add })
     let ret = super.splice(idx, remove, ...add)
-    if (this._obv_len) this._obv_len(this.length)
+    this._up()
     return ret
   }
 
@@ -141,7 +141,7 @@ export class ObservableArray extends MixinEmitter(Array) {
     if (!items.length) return this.length
     this.emit('change', { type: 'unshift', values: items })
     let ret = super.unshift(...items)
-    if (this._obv_len) this._obv_len(this.length + items.length)
+    this._up()
     return ret
   }
 
@@ -166,6 +166,11 @@ export class ObservableArray extends MixinEmitter(Array) {
   //   }
   //   return obj
   // }
+
+  // utility to update after an operation
+  _up () {
+    if (this._obv_len) this._obv_len(this.length)
+  }
 }
 
 // this function is to replicate changes made to one obv arr to another one(s)
