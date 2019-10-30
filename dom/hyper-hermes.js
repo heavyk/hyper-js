@@ -9,7 +9,7 @@
 
 import { is_obv } from './observable'
 import { observe, add_event } from './observable-event'
-import { define_prop, array_idx, define_value, error } from '@hyper/utils'
+import { define_prop, kind_of, array_idx, define_value, error } from '@hyper/utils'
 
 import { win, doc, customElements } from './dom-base'
 import { isNode, txt, comment } from './dom-base'
@@ -180,6 +180,10 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
       if (v) {
         o = e.classList
         if (Array.isArray(v)) for (s of v) s && o.add(s)
+        else if (typeof v === 'object')
+          for (s in v) is_obv(v[s])
+            ? cleanupFuncs.push(v[s]((v) => o.toggle(s, v), 1))
+            : o.toggle(s, v[s])
         else o.add(v)
       }
     } else if ((i  = (k === 'on')) || k === 'before') {
