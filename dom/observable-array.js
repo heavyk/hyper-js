@@ -374,9 +374,10 @@ export class RenderingArray extends ObservableArray {
           if (fl >= 1) self._d.length = i
           // if (fl >= 2) self._ctx.length = i
           if (fl >= 3) self._idx.length = i
-          for (v of e.values) t.push(self.fn_call(v, len)) // this used to be len++ and i was calculated before (dunno why)
+          i = Math.min(i, min) - len
+          for (v of e.values) t.push(self.fn_call(v, len++))
           // calculate how many elements need to be removed and remove or push
-          if ((i = Math.min(i, min) - len) > 0) super.splice(j, i, ...t)
+          if (i > 0) super.splice(j, i, ...t)
           else super.push(...t)
           break
         case 'splice':
