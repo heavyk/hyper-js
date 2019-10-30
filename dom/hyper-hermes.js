@@ -15,7 +15,7 @@ import { win, doc, customElements } from './dom-base'
 import { isNode, txt, comment } from './dom-base'
 
 // add your own (or utilise this to make your code smaller!)
-export var short_attrs = { s: 'style', c: 'className', class: 'className', for: 'htmlFor' }
+export var short_attrs = { s: 'style', c: 'class', for: 'htmlFor' }
 // however, when using setAttribute, these need to be reversed
 export var short_attrs_rev = { className: 'class', htmlFor: 'for' }
 
@@ -456,13 +456,16 @@ export const obvNode = (e, v, cleanupFuncs = []) => {
   return r
 }
 
+// exported to allow other files to extend the prototype easier
 export const Node_prototype = Node.prototype
+
 // shortcut to append multiple children (w/ cleanupFuncs)
 Node_prototype.iB = function (el, ref, cleanupFuncs) { return this.insertBefore(obvNode(this, el, cleanupFuncs), ref) }
 // shortcut to append multiple children (w/ cleanupFuncs)
 Node_prototype.aC = function (el, cleanupFuncs) { return this.appendChild(isNode(el) ? el : obvNode(this, el, cleanupFuncs)) }
 // shortcut to removeChild
-Node_prototype.rC = function (child) { return this.removeChild(child) }
+// Node_prototype.rC = function (child) { return this.removeChild(child) }
+Node_prototype.rC = function (child) { return child.rm() }
 // shortcut to apply attributes as if they were the second argument to `h('.lala', {these ones}, ...)`
 Node_prototype.apply = function (obj, cleanupFuncs) {
   for (let k in obj) set_attr(this, k, obj[k], cleanupFuncs)
