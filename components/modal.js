@@ -11,7 +11,7 @@ export default function modal (frame, opts = {}) {
     opts.title = v(opts.title || null) // null so that it gets a value. if it remains undefined, the obv won't init.
     opts.content = v(opts.content(G))
     opts.footer = v(opts.footer)
-    let no_close_button = opts.close_button == 0
+    let no_close_button = opts.close_button != 1
 
     let el =
     h('.modal-background', {boink: (ev) => { ev.target === el && !opts.no_background_close && opts.close() }},
