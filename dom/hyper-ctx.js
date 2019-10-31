@@ -63,9 +63,9 @@ let last_id = 0
 export function new_ctx (G = global_ctx(), fn, ...args) {
   if (DEBUG && typeof fn !== 'function') error('new_ctx is now called with a function which returns an element')
 
-  var cleanupFuncs = []
-  var obvs = {}
-  var ctx = Object.create(G, {
+  let cleanupFuncs = []
+  let obvs = Object.create(G.o, {})
+  let ctx = Object.create(G, {
     _id: define_value(++last_id),
     // _ns: define_value(name),
     // _ctx: define_value(sub),
