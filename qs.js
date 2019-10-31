@@ -21,6 +21,10 @@ _.isType = function (type) {
   }
 }
 
+// @Cleanup: move these functions to use utils.kind_of
+//           or, actually perhaps they should be incorporated
+//           to save a few bytes if the functions get reused enough
+
 _.isObject = _.isType('Object')
 _.isArray = _.isType('Array')
 _.isFunction = _.isType('Function')

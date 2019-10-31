@@ -1,5 +1,7 @@
 
-import isObject from './lodash/isObject'
+// Cleanup: this imports a whole bunch of stuff.
+//          perhaps think about something maybe a little lighter.
+import is_obj from './lodash/isObject'
 
 export function noop () {}
 
@@ -162,6 +164,7 @@ export function pick (object, keys) {
   return data
 }
 
+// @Cleanup: this looks to be a duplicate of the above `is_empty`
 export function isEmpty (value) {
   return (typeof value.length === 'number' && !value.length) ||
       (typeof value.size === 'number' && !value.size) ||
@@ -217,9 +220,9 @@ export function mergeDeep(target, ...sources) {
   if (!sources.length) return target
   var key, src_obj, source = sources.shift()
 
-  if (isObject(target) && isObject(source)) {
+  if (is_obj(target) && is_obj(source)) {
     for (key in source) {
-      if (isObject(src_obj = source[key])) {
+      if (is_obj(src_obj = source[key])) {
         if (!target[key]) target[key] = {}
         mergeDeep(target[key], src_obj)
       } else {
@@ -233,16 +236,16 @@ export function mergeDeep(target, ...sources) {
 
 // same as above, but also concats arrays
 export function mergeDeepArray(target, ...sources) {
-  if (!sources.length || !isObject(target)) return target
+  if (!sources.length || !is_obj(target)) return target
   var key, src_val, obj_val, source
 
-  if (isObject(source = sources.shift())) {
+  if (is_obj(source = sources.shift())) {
     for (key in source) {
       src_val = source[key]
       obj_val = target[key]
       if (Array.isArray(src_val) || Array.isArray(obj_val)) {
         target[key] = (obj_val || []).concat(src_val)
-      } else if (isObject(src_val)) {
+      } else if (is_obj(src_val)) {
         if (!obj_val) target[key] = {}
         mergeDeep(obj_val, src_val)
       } else {
