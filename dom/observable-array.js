@@ -1,5 +1,5 @@
 import MixinEmitter from '@lib/drip/MixinEmitter'
-import { value, obv_obj } from '@lib/dom/observable'
+import { value, is_obv, obv_obj } from '@lib/dom/observable'
 import { empty_array, extend, swap, define_prop, define_getter } from '@lib/utils'
 import { new_ctx } from '@lib/dom/hyper-ctx'
 import isEqual from '@lib/isEqual'
@@ -292,27 +292,37 @@ export class RenderingArray extends ObservableArray {
   constructor (G, data, fn, opts = {}) {
     super()
     opts = extend({ plain: true }, opts)
-    this.fn = typeof data === 'function' ? (fn = data) : fn
-    let k, fl = this.fl = fn.length
-    this.G = G
-    this.d = data instanceof ObservableArray ? data : (data = new ObservableArray(Array.isArray(data) ? data : []))
+    let k, fl, self = this
+    self.fn = typeof data === 'function' ? (fn = data) : fn
+    fl = self.fl = fn.length
+    self.G = G
+    self.d = data instanceof ObservableArray ? data : (data = new ObservableArray(Array.isArray(data) ? data : []))
     // this should have cleanupFuncs in the context (which adds h/s cleanup to the list when it makes the context)
-    G.cleanupFuncs.push(() => { this.cleanup() })
+    G.cleanupFuncs.push(() => { self.cleanup() })
 
     // where we store the id/data which gets passed to the rendering function
-    this._d = []
-    // if (fl >= 2) this._ctx = []
-    if (fl >= 3) this._idx = []
+    self._d = []
+    // if (fl >= 2) self._ctx = []
+    if (fl >= 3) self._idx = []
 
-    if (opts.min) {
-      this.empty_fn = typeof opts.empty_fn === 'function' ? opts.empty_fn : () => 'empty'
+    // assigns options to `self`
+    for (k in opts) self[k] = opts[k]
+
+    // if data has length, then render and add each of them
+    self.data(data)
+
+    // finally, if min is an obv, it'll want to ensure any missing empty ones are rendered
+    if (k = opts.min) {
+      self.empty_fn = typeof opts.empty_fn === 'function' ? opts.empty_fn : () => 'empty'
+      if (is_obv(k)) k((new_min) => {
+        let real_len = self.length
+        let empty_els = real_len - self._d.length
+        let to_add = new_min - empty_els
+        if (to_add < 0) super.splice(real_len + to_add, -to_add) // chop everything off the end
+        if (to_add > 0) for (; to_add > 0; to_add--) super.push(self.empty_fn(real_len++))
+        self.min = new_min
+      })
     }
-
-    // assigns options to `this`
-    for (k in opts) this[k] = opts[k]
-
-    // lastly, if data has length, then render and add each of them
-    this.data(data)
   }
 
   data (data) {
