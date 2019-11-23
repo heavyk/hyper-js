@@ -151,23 +151,14 @@ class Ambition extends EventEmitter {
     }
   }
 
-  respondSoon () {
-    var a = arguments
+  respondSoon (...a) {
     var self = this
-    process.nextTick(function () {
-      return self.response.apply(self, a)
-    })
+    next_tick(() => self.response.apply(self, a))
   }
 
-  soon () {
-    var a = arguments
+  soon (...a) {
     var self = this
-    // process.nextTick(function () {
-    //   return self.now.apply(self, a)
-    // })
-    setTimeout(function () {
-      self.now.apply(self, a)
-    }, 100)
+    after(0.1, () => self.now.apply(self, a))
   }
 
   _resolve (it, cb) {

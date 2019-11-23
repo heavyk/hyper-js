@@ -1,4 +1,5 @@
 
+import { after, next_tick } from '@hyper/utils'
 import { eases } from './toast-zone'
 
 import './whammy.css'
@@ -11,10 +12,10 @@ export default function whammy ({h}, frame) {
 
     frame.aC(el)
 
-    if (seconds) setTimeout(() => {
+    if (seconds) after(seconds, () => {
       el.style.opacity = 0
-      setTimeout(() => el.rm(), 1000) // max 1s fade out :) this isn't the 90's
-    }, seconds * 1000)
+      after(1, () => el.rm()) // max 1s fade out :) this isn't the 90's
+    })
 
     return el
   }

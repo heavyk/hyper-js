@@ -1,4 +1,5 @@
 import debounce from './lodash/debounce'
+import { after } from '@hyper/utils'
 
 export default function onScroll (el, percent_or_px, handler) {
   let _el = el && el.scrollHeight ? el : window
@@ -13,22 +14,22 @@ export default function onScroll (el, percent_or_px, handler) {
       _el.removeEventListener('scroll', throttled)
     }
   }
-  setTimeout(() => {
+  after(1, () => {
     if (timeout) clearTimeout(timeout)
     throttled()
-  }, 1000)
+  })
 
   return obj
 
   function _onScroll (e) {
-    if (obj.working) return timeout ? null : timeout = setTimeout(throttled, 10)
+    if (obj.working) return timeout ? null : timeout = after(0.01, throttled)
     let rect = body.getBoundingClientRect()
     let bottom_px = window.pageYOffset + window.innerHeight
 
     if ((percent_or_px < 1 && (rect.height * percent_or_px) < bottom_px) || (rect.height - percent_or_px) < bottom_px) {
       obj.working = true
       handler(function () {
-        setTimeout(throttled, 10)
+        after(0.01, throttled)
         obj.working = false
       })
     }

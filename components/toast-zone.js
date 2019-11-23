@@ -1,10 +1,14 @@
 
 import './toast-zone.css'
 
+import { extend, after } from '@hyper/utils'
+
 export const eases = {
   fast: 'cubic-bezier(.33,.57,0,1)',
   impact: 'cubic-bezier(.42,0,0,1)',
 }
+
+// @Improve: this could easily be a custom element.
 
 export default function toaster (G, toast_zone_style) {
   const {h} = G
@@ -19,13 +23,13 @@ export default function toaster (G, toast_zone_style) {
       if (quickly) el.rm()
       else {
         el.style.opacity = 0
-        setTimeout(() => toast_zone.rC(el), 1000) // max 1s fade out... this isn't the 90's :)
+        after(1, () => el.rm()) // max 1s fade out... this isn't the 90's :)
       }
     }
   }
 
   toast_zone.toast = (msg, seconds = 3, options = {}) => {
-    let { pinned, ease, animation } = Object.assign({
+    let { pinned, ease, animation } = extend({
       pinned: seconds == 0,
       ease: 'ease-in',
       animation: 'toasted',
@@ -40,7 +44,7 @@ export default function toaster (G, toast_zone_style) {
     toast_zone.aC(el)
     toasts.push(el)
 
-    if (seconds) setTimeout(remove, seconds * 1000, el)
+    if (seconds) after(seconds, remove, el)
 
     return el
   }

@@ -1,7 +1,7 @@
 
-import assign from '@lodash/assign'
+import { each, assign, next_tick } from '@hyper/utils'
+
 import h from '@hyper/dom/hyper-hermes'
-import each from '@lodash/each'
 
 function nlElastic (node, keypath, padding) {
   function int(str) {
@@ -151,19 +151,14 @@ function nlElastic (node, keypath, padding) {
       ta.style.overflowY = overflow || 'hidden'
 
       if (taHeight !== mirrorHeight) {
-        console.log('h:', mirrorHeight)
         ta.style.height = mirrorHeight + 'px'
-        // setTimeout(function () {
         window.requestAnimationFrame(function () {
-          console.log('elastic:resize')
           ractive.fire('elastic:resize', $ta)
         }, 16)
       }
 
       // small delay to prevent an infinite loop
-      setTimeout(function () {
-        active = false
-      }, 1)
+      next_tick(() => active = false)
     }
   }
 
@@ -190,13 +185,12 @@ function nlElastic (node, keypath, padding) {
     forceAdjust()
   })
 
-
   ractive.on('elastic:adjust', function () {
     initMirror()
     forceAdjust()
   })
 
-  setTimeout(adjust, 0)
+  next_tick(adjust)
 
   return {
     teardown () {
@@ -205,13 +199,5 @@ function nlElastic (node, keypath, padding) {
     }
   }
 }
-// select (node, keypath) {
-//   node.focus()
-//   return {
-//     teardown () {
-//       // pika.destroy()
-//     }
-//   }
-// }
 
 export default nlElastic

@@ -10,6 +10,7 @@
 import { is_obv } from './observable'
 import { observe, add_event } from './observable-event'
 import { define_prop, kind_of, array_idx, define_value, error } from '@hyper/utils'
+import { after, next_tick } from '@hyper/utils'
 
 import { win, doc, customElements } from './dom-base'
 import { isNode, txt, comment } from './dom-base'
@@ -117,7 +118,7 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
   // convert short attributes to long versions. s -> style, c -> className
   var s, o, i, k = short_attrs[key_] || key_
   if (typeof v === 'function') {
-    setTimeout(() => {
+    after(() => {
       if (k === 'boink') {
         observe.call(cleanupFuncs, e, {boink: v})
       } else if (k === 'press') {
@@ -147,7 +148,7 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
         s === "INPUT" && observe.call(cleanupFuncs, e, {input: v})
         s === "SELECT" && observe.call(cleanupFuncs, e, k === 'label' ? {select_label: v} : {select: v})
       }
-    }, 0)
+    })
   } else {
     if (k === 'assign' || k === 'extend') {
       // for(s in v) e[s] = v[s]
@@ -161,13 +162,13 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
     } else if (k === 'contenteditable') {
       e.contentEditable = !!v
     } else if (k === 'autofocus') {
-      setTimeout(() => e.focus(), 10)
+      after(0.01, () => e.focus())
     } else if (k === 'autoselect') {
-      setTimeout(() => {
+      after(0.01, () => {
         e.focus()
         var range = [v[0] || 0, v[1] || -1]
         e.setSelectionRange.apply(e, range)
-      }, 10)
+      })
     } else if (k === 'selected') {
       e.defaultSelected = !!v
     } else if (k === 'checked') {
@@ -201,7 +202,7 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
       // I believe the set-timeout here is to allow the element time to be added to the dom.
       // it is likely that this is undesirable most of the time (because it can create a sense of a value 'popping' into the dom)
       // so, likely I'll want to move the whole thing out to a function which is called sometimes w/ set-timeout and sometimes not.
-      setTimeout(observe.bind(cleanupFuncs, e, v), 0)
+      next_tick(observe.bind(cleanupFuncs, e, v))
       // observe.call(cleanupFuncs, e, v)
     } else if (k === 'style') {
       if (typeof v === 'string') {

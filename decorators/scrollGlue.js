@@ -2,6 +2,7 @@
 // origin: https://github.com/Luegg/angularjs-scroll-glue
 
 import onresize from '@hyper/dom/element-onresize'
+import { next_tick } from '@hyper/utils'
 
 function scrollGlue (node, keypath, direction) {
   direction = direction || 'bottom'
@@ -48,9 +49,9 @@ function scrollGlue (node, keypath, direction) {
   let glue = () => {
     let attached = directions[direction].isAttached(node)
     if (attached || i++ === 0) {
-      setTimeout(() => {
+      next_tick(() => {
         directions[direction].scroll(node)
-      }, 1)
+      })
     }
   }
 
