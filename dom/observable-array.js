@@ -1,6 +1,6 @@
 import MixinEmitter from '@lib/drip/MixinEmitter'
 import { value, is_obv, obv_obj } from '@lib/dom/observable'
-import { empty_array, extend, swap, define_prop, define_getter } from '@lib/utils'
+import { empty_array, extend, swap, define_prop, define_getter, error } from '@lib/utils'
 import { new_ctx } from '@lib/dom/hyper-ctx'
 import isEqual from '@lib/isEqual'
 // import invoke from '@lib/lodash/invoke'
@@ -296,7 +296,7 @@ export class RenderingArray extends ObservableArray {
     self.fn = typeof data === 'function' ? (fn = data) : fn
     fl = self.fl = fn.length
     self.G = G
-    self.d = data instanceof ObservableArray ? data : (data = new ObservableArray(Array.isArray(data) ? data : []))
+    self.d = data instanceof ObservableArray ? data : new ObservableArray() && DEBUG && error('data must be a RenderingArray')
     // this should have cleanupFuncs in the context (which adds h/s cleanup to the list when it makes the context)
     G.cleanupFuncs.push(() => { self.cleanup() })
 
