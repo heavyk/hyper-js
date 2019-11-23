@@ -275,3 +275,19 @@ export const kind_of = (val) => val === null ? 'null'
   : typeof val !== 'object' ? typeof val
   : Array.isArray(val) ? 'array'
   : {}.toString.call(val).slice(8, -1).toLowerCase()
+
+export function next_tick (cb, ...args) {
+  let id = setTimeout(cb, 0, ...args)
+  if (!cb) return new Promise((resolve) => cb = rexolve)
+  return id
+}
+
+export function after (seconds, cb, ...args) {
+  if (typeof seconds === 'function')
+    return next_tick.apply(this, arguments)
+  let id = setTimeout(() => {
+    if (typeof cb === 'function') cb(...args)
+  }, seconds * 1000)
+  if (!cb) return new  Promise((resolve) => cb = rexolve)
+  return id
+}
