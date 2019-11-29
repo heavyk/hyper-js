@@ -215,7 +215,7 @@ export function extend (...obj) {
   return Object.assign(...obj)
 }
 
-export extend as assign
+export { extend as assign }
 
 // knicked from: https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
 export function mergeDeep(target, ...sources) {

@@ -2,7 +2,7 @@
 // instead of splicing on removal (or some other expensive array modifying operation)
 // it nulls out the listener.
 // when emitting, if it encounters a null, it counts them up and if they reach a threshold:
-// RUN_COMPACTOR_NULLS -- then the expensive compactor will run the compactor
+// NULL_LISTENERS_RUN_COMPACTOR -- then the expensive compactor will run the compactor
 
 import { remove_every as compactor } from '@hyper/utils'
 
@@ -15,8 +15,8 @@ export function emit (listeners, old_val, val) {
     if (typeof (fn = listeners[i]) === 'function') fn(val, old_val)
     else c++
 
-  // if there are RUN_COMPACTOR_NULLS or more null values, compact the array on next tick
-  if (c > RUN_COMPACTOR_NULLS) setTimeout(compactor, 1, listeners)
+  // if there are NULL_LISTENERS_RUN_COMPACTOR or more null values, compact the array on next tick
+  if (c > NULL_LISTENERS_RUN_COMPACTOR) setTimeout(compactor, 1, listeners)
 }
 
 // remove a listener
