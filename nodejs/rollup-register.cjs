@@ -12,6 +12,7 @@ const arrify = require('arrify')
 const slash = require('slash')
 const rollup = require('rollup')
 const deasync = require('deasync')
+const debug = require('debug')('rollup-register')
 
 const findCacheDir = require('find-cache-dir')
 const CACHE_DIR = findCacheDir({name: 'rollup-register'})
@@ -116,7 +117,7 @@ const compile = (code, filename) => {
     return code
   }
 
-  console.log('rollup:compile', filename)
+  debug('rollup:compile', filename)
 
   // const cacheKey = `${filename}:${JSON.stringify(transformOpts)}:${buble.VERSION}`
   //
@@ -185,8 +186,8 @@ const revert = () => {
   delete require.cache[require.resolve(__filename)]
 }
 
-const register = opts => {
-  opts = opts || { extensions: ['.js', '.jsx', '.es6', '.es'] }
+const register = (opts = {}) => {
+  opts = Object.assign({ extensions: ['.js', '.jsx', '.es6', '.es'] }, opts)
 
   if (opts.extensions) {
     hookExtensions(opts.extensions)
@@ -212,9 +213,9 @@ const register = opts => {
   Object.assign(transformOpts, opts)
 }
 
-// register({
-//   extensions: ['.js', '.jsx', '.es6', '.es']
-// })
+register({
+  extensions: ['.js', '.jsx', '.es6', '.es', '.mjs']
+})
 
 module.exports = register
 module.exports.revert = revert
