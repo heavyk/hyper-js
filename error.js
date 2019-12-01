@@ -1,6 +1,7 @@
-export function print_error (message, node, id) {
-  console.error('Error: ' + message)
-  if (id) console.error('  in file: ' + id + (node.loc ? ':' + node.loc.start.line : ''))
+export function print_error (message, id, loc, code) {
+  console.error(message || 'Unknown Error')
+  if (code) console.error(error_context(id, loc, code))
+  else if (id) console.error('  in: ' + id + (loc ? ':' + loc.start.line : ''))
 }
 
 
@@ -8,7 +9,7 @@ export function error_context (id, loc, code) {
   let { start, end } = loc.start ? loc : { start: loc, end: loc }
   let { line, column } = start
   let out = ''
-  if (id) out += 'in file: '+id+(line ? ':'+line+(column ? ':'+column : '') : '')+'\n'
+  if (id) out += '  in: '+id+(line ? ':'+line+(column ? ':'+column : '') : '')+'\n'
   if (code) {
     let num_lines = 5
     let lines = code.toString().split(/\r?\n/)
@@ -19,7 +20,7 @@ export function error_context (id, loc, code) {
     let pre = lines.slice(Math.max(0, index - pre_lines), index)
     let post = lines.slice(index + 1, index + 1 + post_lines)
 
-    let line_no_width = ((line + post_lines)+'').length + 2
+    let line_no_width = ((line + post_lines)+'').length + 1
     let line_no = line - pre_lines
 
     // out += pre.map(l => (line_no++)+': '+l).join('\n')
