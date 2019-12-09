@@ -19,7 +19,35 @@ const CACHE_DIR = findCacheDir({name: 'rollup-register'})
 
 const startsWith = (str, match) => str.indexOf(match) === 0
 
-const regexify = val => {
+// ----
+// default register options (re-register it if you don't like them.)
+// ----
+
+const plugin_import_alias = require('../../architect/rollup-plugin-import-alias')
+const plugin_replace = require('@rollup/plugin-replace')
+const lib_path = Path.resolve(__dirname, '..') + '/'
+const is_production = process.env.NODE_ENV === 'production'
+
+const default_opts = {
+  extensions: ['.js', '.jsx', '.es6', '.es', '.mjs'],
+  input: {
+    plugins: [
+      plugin_import_alias({
+        '@lib/': lib_path,
+        '@hyper/': lib_path,
+        '@lodash/': lib_path + 'lodash/',
+      }),
+      plugin_replace({
+        DEBUG: JSON.stringify(!is_production),
+        __PRODUCTION__: JSON.stringify(is_production), // do I need JSON.stringify??
+        NULL_LISTENERS_RUN_COMPACTOR: '9', // after finding 9 nulls, compact the array
+      }),
+    ],
+  },
+}
+
+// @Cleanup: copy this to hyper-js?
+function regexify (val) {
   if (!val) {
     return new RegExp(/.^/)
   }
@@ -51,8 +79,9 @@ const regexify = val => {
   return new TypeError('Illegial type for regexify')
 }
 
-const maps = {}
-const transformOpts = {}
+let maps = {}
+let input_options = {}
+let output_options = {}
 let piratesRevert
 let ignore
 let only
@@ -61,15 +90,14 @@ sourceMapSupport.install({
   handleUncaughtExtensions: false,
   environment: 'node',
   retrieveSourceMap: source => {
+    debug('retrive src map for:', source)
     const map = maps[source]
 
     if (map) {
-      return {
-        url: null,
-      map}
+      debug('found it!')
     }
 
-    return null
+    return map ? { url: null, map } : null
   }
 })
 
@@ -80,11 +108,11 @@ const cwd = process.cwd()
 const getRelativePath = filename => Path.relative(cwd, filename)
 const mtime = filename => Number(fs.statSync(filename).mtime)
 
-const _shouldIgnore = (pattern, filename) => {
+function _shouldIgnore (pattern, filename) {
   return typeof pattern === 'function' ? pattern(filename) : pattern.test(filename)
 }
 
-const shouldIgnore = filename => {
+function shouldIgnore (filename) {
   if (!ignore && !only) {
     return getRelativePath(filename).split(Path.sep).indexOf('node_modules') >= 0
   }
@@ -112,15 +140,15 @@ const shouldIgnore = filename => {
   return false
 }
 
-const compile = (code, filename) => {
-  if (shouldIgnore(filename)) {
+function compile (code, filename) {
+  if (shouldIgnore(filename) || !/(im|ex)port/.test(code)) {
     return code
   }
 
   debug('rollup:compile', filename)
 
   // const cacheKey = `${filename}:${JSON.stringify(transformOpts)}:${buble.VERSION}`
-  //
+
   // if (cache) {
   //   const cached = cache[cacheKey]
   //
@@ -134,7 +162,44 @@ const compile = (code, filename) => {
   //   input: filename
   // })
 
-  let result = deasync(rollup_transform)(filename)
+  let result = deasync(rollup_transform)(filename, code)
+  let { output } = result
+  for (const chunkOrAsset of output) {
+    if (chunkOrAsset.type === 'asset') {
+      // For assets, this contains
+      // {
+      //   fileName: string,              // the asset file name
+      //   source: string | Buffer        // the asset source
+      //   type: 'asset'                  // signifies that this is an asset
+      // }
+      // console.log('Asset', chunkOrAsset);
+    } else {
+      // For chunks, this contains
+      // {
+      //   code: string,                  // the generated JS code
+      //   dynamicImports: string[],      // external modules imported dynamically by the chunk
+      //   exports: string[],             // exported variable names
+      //   facadeModuleId: string | null, // the id of a module that this chunk corresponds to
+      //   fileName: string,              // the chunk file name
+      //   imports: string[],             // external modules imported statically by the chunk
+      //   isDynamicEntry: boolean,       // is this chunk a dynamic entry point
+      //   isEntry: boolean,              // is this chunk a static entry point
+      //   map: string | null,            // sourcemaps if present
+      //   modules: {                     // information about the modules in this chunk
+      //     [id: string]: {
+      //       renderedExports: string[]; // exported variable names that were included
+      //       removedExports: string[];  // exported variable names that were removed
+      //       renderedLength: number;    // the length of the remaining code in this module
+      //       originalLength: number;    // the original length of the code in this module
+      //     };
+      //   },
+      //   name: string                   // the name of this chunk as used in naming patterns
+      //   type: 'chunk',                 // signifies that this is a chunk
+      // }
+      // console.log('Chunk', chunkOrAsset.modules);
+    }
+  }
+
   result = result.output[0]
   let diff = code.length - result.code.length
 
@@ -148,18 +213,36 @@ const compile = (code, filename) => {
   return result.code
 }
 
-function rollup_transform (filename, cb) {
+function rollup_transform (filename, code, cb) {
+  // console.log('doing transform')
+  // console.log('doing transform')
+  // console.log('doing transform')
+  // console.log('input:before', input_options)
+  let input_opts = Object.assign({}, input_options, {
+    input: filename,
+    acorn: { allowReturnOutsideFunction: true, allowHashBang: true }
+  })
+  // console.log('input:after', input_opts)
+  // console.log('output:before', output_options)
+  let output_opts = Object.assign({}, output_options, {
+    file: Path.join(CACHE_DIR, filename),
+    format: 'cjs'
+  })
+  // console.log('output:after', output_opts)
   try {
-    rollup.rollup({
-      input: filename,
-      acorn: { allowReturnOutsideFunction: true, allowHashBang: true }
-    }).then((bundle) => {
-      return bundle.generate({
-        file: Path.join(CACHE_DIR, filename),
-        format: 'cjs'
-      })
+    rollup.rollup(input_opts).then((bundle) => {
+      return bundle.generate(output_opts)
     }).then((res) => {
       if (cb) cb(null, res)
+    }).catch((err) => {
+      if (err.code === 'PARSE_ERROR') {
+        console.log(err.parserError.message)
+        console.log(`  in ${err.loc.file}:${err.loc.line}:${err.loc.column}`)
+        console.log(err.frame)
+      }
+
+      if (cb) cb(err)
+      else throw err
     })
   } catch (err) {
     if (cb) cb(err)
@@ -167,7 +250,7 @@ function rollup_transform (filename, cb) {
   }
 }
 
-const hookExtensions = exts => {
+function hookExtensions (exts) {
   if (piratesRevert) {
     piratesRevert()
   }
@@ -178,7 +261,7 @@ const hookExtensions = exts => {
   })
 }
 
-const revert = () => {
+function revert () {
   if (piratesRevert) {
     piratesRevert()
   }
@@ -186,8 +269,14 @@ const revert = () => {
   delete require.cache[require.resolve(__filename)]
 }
 
-const register = (opts = {}) => {
-  opts = Object.assign({ extensions: ['.js', '.jsx', '.es6', '.es'] }, opts)
+function register (opts = default_opts, input_opts = {}, output_opts = {}) {
+  opts = Object.assign({ extensions: ['.js', '.jsx', '.es6', '.es', '.mjs'] }, opts)
+  input_options = input_opts
+  output_options = output_opts
+
+  if (opts.revert === false && piratesRevert) return
+
+  debug('registering', opts)
 
   if (opts.extensions) {
     hookExtensions(opts.extensions)
@@ -205,17 +294,18 @@ const register = (opts = {}) => {
     only = arrify(opts.only).map(regexify)
   }
 
-  delete opts.extensions
-  delete opts.cache
-  delete opts.ignore
-  delete opts.only
+  if (opts.input) {
+    input_options = Object.assign(input_options, opts.input)
+  }
 
-  Object.assign(transformOpts, opts)
+  if (opts.output) {
+    output_options = Object.assign(output_options, opts.output)
+  }
 }
 
-register({
-  extensions: ['.js', '.jsx', '.es6', '.es', '.mjs']
-})
+register(default_opts)
+
+// var { print_error } = require('../error.js')
 
 module.exports = register
 module.exports.revert = revert
