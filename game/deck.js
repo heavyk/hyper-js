@@ -1,4 +1,4 @@
-import shuffle from '@lib/game/shuffle-array'
+import shuffle from '@hyper/game/shuffle-array'
 
 export function shuffled_deck () {
   var deck = ['AS','KS','QS','JS','TS','9S','8S','7S','6S','5S','4S','3S','2S',

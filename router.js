@@ -1,6 +1,6 @@
 import Route from './route'
-import { scrollTo, parents, assign, isEmpty } from '@lib/utils'
-import { parseUri, scrollTo, parseQS, stringifyQS, stringifyHash, joinPaths } from '@lib/router-utils'
+import { scrollTo, parents, assign, isEmpty } from '@hyper/utils'
+import { parseUri, scrollTo, parseQS, stringifyQS, stringifyHash, joinPaths } from '@hyper/router-utils'
 
 import EventEmitter from './drip/emitter'
 

@@ -1,4 +1,4 @@
-import { extend, after } from '@lib/utils'
+import { extend, after } from '@hyper/utils'
 
 
 

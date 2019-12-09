@@ -1,5 +1,5 @@
 
-import { error } from '@lib/utils'
+import { error } from '@hyper/utils'
 
 export const CARDINAL = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen'.split(' ')
 export const ORDINAL = 'zeroth first second third fourth fifth'.split(' ')

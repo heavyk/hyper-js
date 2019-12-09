@@ -1,5 +1,5 @@
 
-import open_close from '@lib/dom/open-close'
+import open_close from '@hyper/dom/open-close'
 
 import './side-panel.css'
 

@@ -1,4 +1,4 @@
-import { random_idx, swap } from '@lib/utils'
+import { random_idx, swap } from '@hyper/utils'
 
 function shuffle_array (array) {
   for (var i = 0; i < array.length; i++) {

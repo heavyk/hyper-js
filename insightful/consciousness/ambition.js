@@ -3,11 +3,11 @@
 // var daFunk = require('da-funk')
 var slice = [].slice
 
-// import EventEmitter from '@lib/drip/emitter'
-import EventEmitter from '@lib/drip/enhanced'
+// import EventEmitter from '@hyper/drip/emitter'
+import EventEmitter from '@hyper/drip/enhanced'
 
-// import { mergeDeep } from '@lib/utils'
-import { extend, each } from '@lib/utils'
+// import { mergeDeep } from '@hyper/utils'
+import { extend, each } from '@hyper/utils'
 
 class Ambition extends EventEmitter {
   constructor (id, options) {

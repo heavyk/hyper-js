@@ -1,6 +1,6 @@
-import EventEmitter from '@lib/drip/emitter'
+import EventEmitter from '@hyper/drip/emitter'
 
-import shuffle from '@lib/game/shuffle-array'
+import shuffle from '@hyper/game/shuffle-array'
 
 import { rankHandInt } from './rank-hand'
 

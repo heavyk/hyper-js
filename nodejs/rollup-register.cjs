@@ -307,5 +307,5 @@ register(default_opts)
 
 // var { print_error } = require('../error.js')
 
+register.revert = revert
 module.exports = register
-module.exports.revert = revert

@@ -1,5 +1,5 @@
 
-import { empty_array, extend, swap, define_prop, define_getter, error } from '@lib/utils'
+import { empty_array, extend, swap, define_prop, define_getter, error } from '@hyper/utils'
 
 // G: ctx from which to inherit sub ctxs
 // data: an ObservableArray of values which will be transformed into a dom reprenstation by `fn`

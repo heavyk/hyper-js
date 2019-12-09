@@ -1,6 +1,6 @@
 
-import { win } from '@lib/dom/dom-base'
-import { value } from '@lib/dom/observable'
+import { win } from '@hyper/dom/dom-base'
+import { value } from '@hyper/dom/observable'
 import XSadd from 'ml-xsadd'
 
 /*

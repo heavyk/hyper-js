@@ -1,4 +1,4 @@
-import { pick, compact, isEmpty, stringify } from '@lib/utils'
+import { pick, compact, isEmpty, stringify } from '@hyper/utils'
 
 export function pathVars (path) {
   let m = path.match(/\/:\w+/g)

@@ -1,9 +1,9 @@
-import MixinEmitter from '@lib/drip/MixinEmitter'
-import { value } from '@lib/dom/observable'
-import { empty_array, extend, swap, define_prop, define_getter, error } from '@lib/utils'
-import isEqual from '@lib/isEqual'
-// import invoke from '@lib/lodash/invoke'
-// import set from '@lib/lodash/set'
+import MixinEmitter from '@hyper/drip/MixinEmitter'
+import { value } from '@hyper/dom/observable'
+import { empty_array, extend, swap, define_prop, define_getter, error } from '@hyper/utils'
+import isEqual from '@hyper/isEqual'
+// import invoke from '@hyper/lodash/invoke'
+// import set from '@hyper/lodash/set'
 
 export default class ObservableArray extends MixinEmitter(Array) {
   // this is so all derived objects are of type Array, instead of ObservableArray
