@@ -1,5 +1,8 @@
 
 import { empty_array, extend, swap, define_prop, define_getter, error } from '@hyper/utils'
+import { is_obv, value } from '@hyper/dom/observable'
+import { new_ctx } from '@hyper/dom/hyper-ctx'
+import ObservableArray from '@hyper/dom/observable-array'
 
 // G: ctx from which to inherit sub ctxs
 // data: an ObservableArray of values which will be transformed into a dom reprenstation by `fn`
