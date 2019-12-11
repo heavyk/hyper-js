@@ -15,7 +15,6 @@ export default function rng_seed (seed) {
   Math.unpredictable = Math.random
   let onhashchange = win.onhashchange = (ev) => {
     let hash = location.hash
-    console.log('hash seed:', hash)
     _seed(hash ? hash.substr(1)*1 : 0)
   }
 
