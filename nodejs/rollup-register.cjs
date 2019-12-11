@@ -24,7 +24,8 @@ const startsWith = (str, match) => str.indexOf(match) === 0
 // ----
 
 const plugin_import_alias = require('../../architect/rollup-plugin-import-alias')
-const plugin_replace = require('@rollup/plugin-replace')
+const plugin_find_and_replace = require('../../architect/rollup-plugin-find-and-replace')
+// const plugin_replace = require('@rollup/plugin-replace')
 const lib_path = Path.resolve(__dirname, '..') + '/'
 const is_production = process.env.NODE_ENV === 'production'
 
@@ -37,10 +38,19 @@ const default_opts = {
         '@hyper/': lib_path,
         '@lodash/': lib_path + 'lodash/',
       }),
-      plugin_replace({
-        DEBUG: JSON.stringify(!is_production),
-        __PRODUCTION__: JSON.stringify(is_production), // do I need JSON.stringify??
-        NULL_LISTENERS_RUN_COMPACTOR: '9', // after finding 9 nulls, compact the array
+      // plugin_replace({
+      //   'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+      //   DEBUG: JSON.stringify(!is_production),
+      //   __PRODUCTION__: JSON.stringify(is_production), // do I need JSON.stringify??
+      //   NULL_LISTENERS_RUN_COMPACTOR: '9', // after finding 9 nulls, compact the array
+      // }),
+      plugin_find_and_replace({
+        constants: {
+          'process.env.NODE_ENV': process.env.NODE_ENV,
+          DEBUG: !is_production,
+          __PRODUCTION__: is_production,
+          NULL_LISTENERS_RUN_COMPACTOR: 9, // after finding 9 nulls, compact the array
+        },
       }),
     ],
   },
@@ -80,8 +90,8 @@ function regexify (val) {
 }
 
 let maps = {}
-let input_options = {}
-let output_options = {}
+let input_options
+let output_options
 let piratesRevert
 let ignore
 let only
@@ -214,21 +224,17 @@ function compile (code, filename) {
 }
 
 function rollup_transform (filename, code, cb) {
-  // console.log('doing transform')
-  // console.log('doing transform')
-  // console.log('doing transform')
-  // console.log('input:before', input_options)
   let input_opts = Object.assign({}, input_options, {
     input: filename,
     acorn: { allowReturnOutsideFunction: true, allowHashBang: true }
   })
-  // console.log('input:after', input_opts)
-  // console.log('output:before', output_options)
+
   let output_opts = Object.assign({}, output_options, {
     file: Path.join(CACHE_DIR, filename),
-    format: 'cjs'
+    esModule: false,
+    format: 'cjs',
   })
-  // console.log('output:after', output_opts)
+
   try {
     rollup.rollup(input_opts).then((bundle) => {
       return bundle.generate(output_opts)
@@ -270,13 +276,12 @@ function revert () {
 }
 
 function register (opts = default_opts, input_opts = {}, output_opts = {}) {
+  if (opts.revert === false && piratesRevert) return
+  debug('registering', opts)
   opts = Object.assign({ extensions: ['.js', '.jsx', '.es6', '.es', '.mjs'] }, opts)
+
   input_options = input_opts
   output_options = output_opts
-
-  if (opts.revert === false && piratesRevert) return
-
-  debug('registering', opts)
 
   if (opts.extensions) {
     hookExtensions(opts.extensions)
@@ -304,8 +309,6 @@ function register (opts = default_opts, input_opts = {}, output_opts = {}) {
 }
 
 register(default_opts)
-
-// var { print_error } = require('../error.js')
 
 register.revert = revert
 module.exports = register
