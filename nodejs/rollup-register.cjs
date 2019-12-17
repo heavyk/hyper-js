@@ -172,7 +172,14 @@ function compile (code, filename) {
   //   input: filename
   // })
 
-  let result = deasync(rollup_transform)(filename, code)
+  let result
+  try {
+    result = deasync(rollup_transform)(filename, code)
+  } catch (err) {
+    console.error(err.message)
+    console.error('  in ' + filename)
+    return
+  }
   let { output } = result
   for (const chunkOrAsset of output) {
     if (chunkOrAsset.type === 'asset') {
