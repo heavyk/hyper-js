@@ -1,4 +1,4 @@
-import { pick, compact, isEmpty, stringify } from '@hyper/utils'
+import { pick, compact, isEmpty, stringify, parseJSON } from '@hyper/utils'
 
 export function pathVars (path) {
   let m = path.match(/\/:\w+/g)
@@ -27,7 +27,7 @@ function pathToRegExpString (path) {
 
 export function parseHash (hash, keys) {
   try {
-    var parsed = compact(JSON.parse(decodeURIComponent(hash.substr(2))))
+    var parsed = compact(parseJSON(decodeURIComponent(hash.substr(2))))
 
     return keys
       ? pick(parsed, keys)
@@ -54,18 +54,24 @@ export function parseUri (uri) {
 }
 
 export function parseQS (qs, keys) {
-  var index = qs.indexOf('?')
-  var parsed = {}
+  var index, parsed = {}, pairs, pair, k, v, c, i = 0
 
-  if (index !== -1) {
-    var pairs = qs.substr(index + 1).split('&')
-    var pair = []
-
-    for (var i = 0, c = pairs.length; i < c; i++) {
-      pair = pairs[i].split('=')
-
-      if ((!isEmpty(pair[1])) && (!isEmpty(parseJSON(pair[1])))) {
-        parsed[decodeURIComponent(pair[0])] = parseJSON(decodeURIComponent(pair[1]))
+  if (~(index = qs.indexOf('?'))) {
+    if ((pairs = qs.substr(index + 1).split('&')) && (c = pairs.length)) {
+      for (; i < c; i++) {
+        pair = pairs[i].split('=')
+        k = decodeURIComponent(pair[0])
+        v = decodeURIComponent(pair[1])
+        if (k && v) {
+          v = parseJSON(v)
+          if (Array.isArray(parsed[k])) {
+            parsed[k].push(v)
+          } else if (parsed[k] === undefined) {
+            parsed[k] = v
+          } else {
+            parsed[k] = [parsed[k], v]
+          }
+        }
       }
     }
   }
