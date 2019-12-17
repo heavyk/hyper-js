@@ -11,8 +11,8 @@ import { new_ctx, el_ctx, global_ctx } from '@hyper/dom/hyper-ctx'
 // import { makeNode } from '@hyper/dom/hyper-hermes'
 
 function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _onload, _afterload) {
-  var tmp, mutationObserver, id, G, ctx, E, width, height, _dpr, args
-  var C = mergeDeep({}, objJSON(_config), DEFAULT_CONFIG)
+  let tmp, mutationObserver, id, G, ctx, E, width, height, _dpr, args
+  let C = mergeDeep({}, objJSON(_config), DEFAULT_CONFIG)
 
   // if a string is provided for the frame, try and find the frame by id, else make a fixud position full-size frame
   id = typeof frame === 'string'
@@ -118,7 +118,11 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
 
   ;(function (onload) {
     function loader () {
-      var e, i = 0, resize
+      let e, i = 0, resize
+      let once_loaded = (e) => {
+        frame.aC(e)
+        if (typeof _afterload === 'function') _afterload(frame, e)
+      }
       // remove everything inside of the frame
       frame.empty()
       // while (e = frame.firstChild)
@@ -136,12 +140,9 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
       // it wouldn't be difficult actually, just borrow some code from `co`
       // https://github.com/tj/co/blob/master/index.js
       if (typeof onload === 'function') {
-        // e = makeNode(frame, onload.bind(e, args), h.cleanupFuncs)
-        // frame.aC(e)
-        // if (e = onload(args)) {
         if (e = new_ctx(G, onload)) {
-          frame.aC(e)
-          if (typeof _afterload === 'function') _afterload(frame, e)
+          if (e.then) e.then(once_loaded)
+          else once_loaded(e)
         }
       }
 
