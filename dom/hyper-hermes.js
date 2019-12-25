@@ -182,7 +182,7 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
         o = e.classList
         if (Array.isArray(v)) for (s of v) s && o.add(s)
         else if (typeof v === 'object')
-          for (s in v) is_obv(v[s])
+          for (let s in v) is_obv(v[s])
             ? cleanupFuncs.push(v[s]((v) => o.toggle(s, v), 1))
             : o.toggle(s, v[s])
         else o.add(v)
