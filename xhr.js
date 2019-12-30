@@ -3,7 +3,7 @@
 
 import qs from './qs'
 
-function xhr (opt, cb) {
+function xhr (opt, cb, progress) {
   if (!opt || !opt.url) {
     cb('No required options - url and/or method.')
   }
@@ -23,7 +23,12 @@ function xhr (opt, cb) {
       url += '?' + data
     }
   }
-  // console.log('xhr.open', method, url)
+
+  if (progress) xhr.onprogress = (ev) => {
+    if (ev.lengthComputable) {
+      progress(ev.loaded, ev.total)
+    }
+  }
   xhr.open(method, url, true)
 
   if (opt.headers) {
@@ -32,7 +37,7 @@ function xhr (opt, cb) {
     }
   }
 
-  xhr.onload = function () {
+  xhr.onload = () => {
     if (xhr.readyState === 4 && xhr.status === 200) {
       try {
         cb(null, JSON.parse(xhr.response))
@@ -44,28 +49,26 @@ function xhr (opt, cb) {
     }
   }
 
-  xhr.onerror = function (e) {
-    cb(e)
-  }
+  xhr.onerror = cb
   xhr.send(data)
 }
 
-export function binary (url, cb) {
-  return new BinaryXHR(url, cb)
-}
-
-function BinaryXHR (url, cb) {
-  // if (!this instanceof BinaryXHR) return new BinaryXHR(url, cb)
+export function BinaryXHR (url, cb, progress) {
   var xhr = new XMLHttpRequest()
   this.xhr = xhr
   xhr.open('GET', url, true)
   xhr.responseType = 'arraybuffer'
+  if (progress) xhr.onprogress = (ev) => {
+    if (ev.lengthComputable) {
+      progress(ev.loaded, ev.total)
+    }
+  }
   xhr.onreadystatechange = () => {
     if (this.readyState === 4) {
       if (this.status !== 200) {
         cb(this.status, this.response)
       } else if (this.response && this.response.byteLength > 0) {
-        cb(false, this.response)
+        cb(null, this.response)
       } else if (this.response && this.response.byteLength === 0) {
         cb('response length 0')
       } else {
@@ -73,6 +76,8 @@ function BinaryXHR (url, cb) {
       }
     }
   }
+  xhr.onabort = cb
+  xhr.onerror = cb
   xhr.send(null)
 }
 
