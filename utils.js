@@ -124,12 +124,14 @@ export function sprintf(format, ...args) {
   return format.replace(/%[s|d]/g, () => args[i++])
 }
 
-// export function float(value, precision) {
-//   return precision = Math.pow(10, precision || 0),
-//     ''+(Math.round(value * precision) / precision)
-// }
-export const float = (value, precision) => (precision = Math.pow(10, precision || 0),
-  ''+(Math.round(value * precision) / precision))
+export function float (value, precision) {
+  return (precision = Math.pow(10, precision || 0),
+    ''+(Math.round(value * precision) / precision))
+}
+
+export function percent (value, precision = 2) {
+  return float(value * 100, precision) + '%'
+}
 
 export function parseJSON (string) {
   try {
