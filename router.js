@@ -1,25 +1,28 @@
 import Route from './route'
-import { scrollTo, parents, assign, isEmpty } from '@hyper/utils'
-import { parseUri, scrollTo, parseQS, stringifyQS, stringifyHash, joinPaths } from '@hyper/router-utils'
+import { parents, assign, isEmpty } from '@hyper/utils'
+import { parseUri, parseQS, stringifyQS, stringifyHash, joinPaths } from '@hyper/router-utils'
+import { scrollTo } from '@hyper/dom/dom-base'
 
 import EventEmitter from './drip/emitter'
 
 export default class Router extends EventEmitter {
-  constructor (options, onunhandled, ondispatch) {
+  constructor (options = {}, onnotfound, ondispatch) {
     super()
-    this.globals = options.globals || []
-    this.basePath = options.basePath || ''
-    this.el = options.el
-    this.data = options.data || function () { return {} }
-    this.history = options.history || history
-    this.strictMode = !!options.strictMode
-    this.linksWatcher = null
-    this.stateWatcher = null
-    this.route = null
-    this.onunhandled = onunhandled
-    this.ondispatch = ondispatch
-    this.routes = []
-    this.uri = {}
+    let self = this
+    self.globals = options.globals || []
+    self.basePath = options.basePath || ''
+    self.el = options.el
+    self.data = options.data || function () { return {} }
+    self.history = options.history || history
+    // self.strictMode = !!options.strictMode
+    self.linksWatcher = null
+    self.stateWatcher = null
+    self.route = null
+    self.onnotfound = onnotfound || options.notfound
+    self.ondispatch = ondispatch || options.dispatch
+    self.afterdispatch = options.after
+    self.routes = []
+    self.uri = {}
   }
 
   addRoute (pattern, Handler, data, observe) {
@@ -59,7 +62,7 @@ export default class Router extends EventEmitter {
 
     // 404
     if (!route) {
-      return typeof this.onunhandled === 'function' ? this.onunhandled(path)
+      return typeof this.onnotfound === 'function' ? this.onnotfound(path)
         : this.redirect(path)
     }
 
@@ -80,7 +83,7 @@ export default class Router extends EventEmitter {
       // update the view's data frov the route (path/qs/hash variables)
       this.uri = uri
       this.route.update(uri, data)
-      if (this.route.view) this.route.view.fire('dispatch')
+      if (IS_RACTIVE) this.route.view.fire('dispatch')
       this.emit('dispatch')
     } else if (options.reload || shouldDispatch(this.uri, uri, route)) {
       // destroy existing route
@@ -95,7 +98,7 @@ export default class Router extends EventEmitter {
       // init new route
       this.uri = uri
       this.route = route.init(uri, data)
-      this.route.view.fire('dispatch')
+      if (IS_RACTIVE) this.route.view.fire('dispatch')
 
       // emit `route` event
       this.emit('route', route)
@@ -192,7 +195,7 @@ export default class Router extends EventEmitter {
         if (href && !el.classList.contains('router-ignore') && pattern.test(href)) {
           var options = { state: {} }
 
-          if (_this.route && _this.route.view) {
+          if (IS_RACTIVE && _this.route && _this.route.view) {
             for (let global of _this.globals) {
               options.state[global] = _this.route.view.get(global)
             }

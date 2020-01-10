@@ -168,9 +168,10 @@ export function pick (object, keys) {
 
 // @Cleanup: this looks to be a duplicate of the above `is_empty`
 export function isEmpty (value) {
-  return (typeof value.length === 'number' && !value.length) ||
-      (typeof value.size === 'number' && !value.size) ||
-      (typeof value === 'object' && !Object.keys(value).length)
+  return !value ||
+    (typeof value.length === 'number' && !value.length) ||
+    (typeof value.size === 'number' && !value.size) ||
+    (typeof value === 'object' && !Object.keys(value).length)
 }
 
 export const stringify = (value) => (!value || typeof value !== 'object') ? value : JSON.stringify(value)

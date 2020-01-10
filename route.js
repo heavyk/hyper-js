@@ -1,26 +1,24 @@
 import { parseJSON, assign, isEmpty, pick, uniq } from './utils'
 import { pathVars, pathToRegExp, pathToStrictRegExp, parseQS, parseHash } from './router-utils'
 
-import map from './lodash/map'
-
 export default class Route {
   constructor (pattern, Handler, data, observe, router) {
     this.pattern = pattern
     this.vars = pathVars(pattern)
     this.map = [this.vars]
     this.regExp = [pathToRegExp(pattern)]
-    this.strictRegExp = [pathToStrictRegExp(pattern)]
+    // this.strictRegExp = [pathToStrictRegExp(pattern)]
     this.isComponent = !!Handler.extend
     this.Handler = Handler
     this.observe = assign({ qs: [], hash: [], state: [] }, observe)
     this.allObserved = this.observe.qs.concat(this.observe.hash, this.observe.state)
     this.router = router || {}
     this.data = data || Handler.data || {}
-    this.view = null
+    if (IS_RACTIVE) this.view = null
   }
 
   destroy () {
-    if (this.view) {
+    if (IS_RACTIVE) {
       this.view.teardown()
       this.view = null
     }
@@ -31,7 +29,7 @@ export default class Route {
   addPattern (pattern) {
     this.map.push(pathVars(pattern))
     this.regExp.push(pathToRegExp(pattern))
-    this.strictRegExp.push(pathToStrictRegExp(pattern))
+    // this.strictRegExp.push(pathToStrictRegExp(pattern))
     this.vars = uniq(flatten(this.map))
   }
 
@@ -39,7 +37,8 @@ export default class Route {
     let data = {}
 
     for (let i = 0, c = this.allObserved.length; i < c; i++) {
-      data[this.allObserved[i]] = this.view.get(this.allObserved[i])
+      if (IS_RACTIVE) data[this.allObserved[i]] = this.view.get(this.allObserved[i])
+      // @Incomplete: the obvs need to be stored somewhere. I probably want to make them get those values
     }
 
     return {
@@ -67,7 +66,7 @@ export default class Route {
   }
 
   update (uri, data) {
-    if (this.view) this.view.set(this.parse(uri, data))
+    if (IS_RACTIVE) this.view.set(this.parse(uri, data))
     // if (this.view) data = assign(this.view.get(), data)
     // if (this.view) this.view.reset(data)
     return this
@@ -78,7 +77,7 @@ export default class Route {
     let _data = this.parse(uri, data)
 
     // not a component
-    if (!this.isComponent) {
+    if (IS_RACTIVE) if (!this.isComponent) {
       this.Handler({ el: this.router.el, data: _data, uri: this.router.uri })
     } else {
       // init new Ractive
@@ -105,9 +104,9 @@ export default class Route {
 
   match (request, strict) {
     for (let i = 0; i < this.regExp.length; i++) {
-      if (strict
+      if (/*strict
         ? this.strictRegExp[i].test(request)
-        : this.regExp[i].test(request))
+        : */ this.regExp[i].test(request))
         return true
     }
     return false
