@@ -8,7 +8,7 @@ export default class Route {
     this.map = [this.vars]
     this.regExp = [pathToRegExp(pattern)]
     // this.strictRegExp = [pathToStrictRegExp(pattern)]
-    this.isComponent = !!Handler.extend
+    if (IS_RACTIVE) this.isComponent = !!Handler.extend
     this.Handler = Handler
     this.observe = assign({ qs: [], hash: [], state: [] }, observe)
     this.allObserved = this.observe.qs.concat(this.observe.hash, this.observe.state)

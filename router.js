@@ -5,6 +5,12 @@ import { scrollTo } from '@hyper/dom/dom-base'
 
 import EventEmitter from './drip/emitter'
 
+// this is a generic router. it doesn't resolve promises so it's a bit simpler
+// and easier to debug because of if it's syncronous nature.
+//
+// so, if you need to do things async between transitions like page animations,
+// instead use @hyper/roadtrip
+
 export default class Router extends EventEmitter {
   constructor (options = {}, onnotfound, ondispatch) {
     super()
@@ -25,7 +31,7 @@ export default class Router extends EventEmitter {
     self.uri = {}
   }
 
-  addRoute (pattern, Handler, data, observe) {
+  add (pattern, Handler, data, observe) {
     let route
     for (var i = 0; i < this.routes.length; i++) {
       if (this.routes[i].Handler === Handler) {
@@ -82,13 +88,14 @@ export default class Router extends EventEmitter {
 
       // update the view's data frov the route (path/qs/hash variables)
       this.uri = uri
-      this.route.update(uri, data)
-      if (IS_RACTIVE) this.route.view.fire('dispatch')
+      route.update(uri, data)
+      if (IS_RACTIVE) route.view.fire('dispatch')
       this.emit('dispatch')
     } else if (options.reload || shouldDispatch(this.uri, uri, route)) {
+      // @Incomplete: need to add onleave hook
       // destroy existing route
-      if (this.route) {
-        this.route.destroy()
+      if (route.destroy) {
+        route.destroy()
       }
 
       // emit `transition` event
@@ -116,7 +123,7 @@ export default class Router extends EventEmitter {
     return location.pathname.substr(this.basePath.length) + location.search + location.hash
   }
 
-  init (options) {
+  start (options) {
     if (this.route) return
     return this.dispatch(this.getUri(), assign({ history: false }, options))
   }
