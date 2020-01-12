@@ -1,6 +1,10 @@
 // knicked from: https://github.com/thlorenz/deep-is
 
-// TODO: move these to lib/utils
+// @Cleanup: stuff like isArguments should be removed. it should never be called on arguments.
+//           same with NaN checks.
+//           same with +0 !== -0 checks.
+//                ... who cares?? they're not necessary to deeply compare data structures
+
 const pSlice = Array.prototype.slice
 
 const isArguments = (object) =>

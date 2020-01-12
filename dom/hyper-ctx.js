@@ -14,7 +14,7 @@ import { update_obv } from '@hyper/dom/observable-event'
 
 export function global_ctx () {
   // let ctx
-  let el = doc.getElementById('global_ctx') || new_ctx({
+  let el = getElementById('global_ctx') || new_ctx({
     _id:0, ERROR: 'THIS IS THE GLOBAL CTX',
     o: {},
     h, s,

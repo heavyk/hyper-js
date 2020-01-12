@@ -1,24 +1,6 @@
 
-import { is_obv, ensure_obv, bind2 } from './observable'
-
-// register a listener
-export const on = (emitter, event, listener, opts = false) =>
-  (emitter.on || emitter.addEventListener)
-    .call(emitter, event, listener, opts)
-
-// unregister a listener
-export const off = (emitter, event, listener, opts = false) =>
-  (emitter.off || emitter.removeEventListener)
-    .call(emitter, event, listener, opts)
-
-// dispatch an event
-// reading simulant source, it appears to be a bit more complicated than just this:
-//  (but I'm not worrying about supporting old browsers). this is designed for modern browsers
-// right now, val is simply being passed through... obviously it should set the correct fields though...
-// which I'm going to just ignore for the time being...
-export const dispatch_event = (element, event, val) => (element.dispatchEvent(new Event(event)), val)
-
-export const prevent_default = (e) => e && e.preventDefault()
+import { is_obv, ensure_obv, bind2 } from '@hyper/dom/observable'
+import { on, off, dispatch_event, prevent_default } from '@hyper/dom/dom-base'
 
 export function listen (element, event, attr, listener, do_immediately, opts) {
   let on_event = (e) => { listener(typeof attr === 'function' ? attr() : attr ? element[attr] : e) }

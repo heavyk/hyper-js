@@ -13,7 +13,7 @@ import { define_prop, kind_of, array_idx, define_value, error } from '@hyper/uti
 import { after, next_tick } from '@hyper/utils'
 
 import { win, doc, customElements } from './dom-base'
-import { isNode, txt, comment } from './dom-base'
+import { isNode, txt, comment, cE } from './dom-base'
 
 // add your own (or utilise this to make your code smaller!)
 export var short_attrs = { s: 'style', c: 'class', for: 'htmlFor' }
@@ -41,7 +41,7 @@ export var short_attrs_rev = { className: 'class', htmlFor: 'for' }
 // when common_tags = ['div','input','div.lala']
 export var common_tags = ['div']
 
-function context (create_element) {
+function hyper_hermes (create_element) {
   var cleanupFuncs = []
 
   function h(...args) {
@@ -381,12 +381,6 @@ export function arrayFragment (e, arr, cleanupFuncs) {
   return frag
 }
 
-export function offsetOf (child) {
-  var i = 0
-  while ((child = child.previousSibling) != null) i++
-  return i
-}
-
 export var special_elements = {}
 define_prop(special_elements, 'define', define_value((name, fn, args) => {
   // if (DEBUG) console.log('defining', name, args)
@@ -398,9 +392,9 @@ export var h = new_dom_context(1)
 export function new_dom_context (no_cleanup) {
   // TODO: turn this into ctx = new Context ((el, args) => { ... })
   //  -- and, turn the context fn into a class??
-  var ctx = context((el, args) => {
+  var ctx = hyper_hermes((el, args) => {
     var i
-    return !~el.indexOf('-') ? doc.createElement(el)
+    return !~el.indexOf('-') ? cE(el)
       : (i = special_elements[el]) !== undefined ? new (customElements.get(el))(...args.splice(0, i))
       : new (customElements.get(el))
   })
@@ -412,7 +406,7 @@ export function new_dom_context (no_cleanup) {
 
 export var s = new_svg_context(1)
 export function new_svg_context (no_cleanup) {
-  var ctx = context((el) => doc.createElementNS('http://www.w3.org/2000/svg', el))
+  var ctx = hyper_hermes((el) => doc.createElementNS('http://www.w3.org/2000/svg', el))
 
   if (!no_cleanup) s.cleanupFuncs.push(() => ctx.cleanup())
   ctx.context = new_svg_context

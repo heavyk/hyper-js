@@ -4,8 +4,9 @@ import { value } from '@hyper/dom/observable'
 import obj_value from '@hyper/obv/obj_value'
 import ResizeSensor from '@hyper/dom/resize-sensor'
 
+// @Encapsusation: the plugin should make its own h context instaed of using the global one.
 import { h } from '@hyper/dom/hyper-hermes'
-import { doc, body, win, basePath } from '@hyper/dom/dom-base'
+import { doc, body, win, base_path } from '@hyper/dom/dom-base'
 import { isNode, getElementById } from '@hyper/dom/dom-base'
 import { new_ctx, el_ctx, global_ctx } from '@hyper/dom/hyper-ctx'
 // import { makeNode } from '@hyper/dom/hyper-hermes'
