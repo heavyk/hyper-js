@@ -8,17 +8,18 @@
 //       additionally, other things unnecessary (old/unused) things can be omitted as wel, for further savings.
 
 import { is_obv } from './observable'
-import { observe, add_event } from './observable-event'
+import { observe_event, add_event } from './observable-event'
 import { define_prop, kind_of, array_idx, define_value, error } from '@hyper/utils'
 import { after, next_tick } from '@hyper/utils'
 
 import { win, doc, customElements } from './dom-base'
-import { isNode, txt, comment, cE } from './dom-base'
+import { isNode, txt, comment, cE, set_style } from './dom-base'
+import { lookup_parent_with_attr } from './dom-base'
 
 // add your own (or utilise this to make your code smaller!)
-export var short_attrs = { s: 'style', c: 'class', for: 'htmlFor' }
+export let short_attrs = { s: 'style', c: 'class', for: 'htmlFor' }
 // however, when using setAttribute, these need to be reversed
-export var short_attrs_rev = { className: 'class', htmlFor: 'for' }
+export let short_attrs_rev = { style: 's', className: 'class', htmlFor: 'for' }
 
 // can be used to save bytes:
 // h(1,{value:11})
@@ -39,17 +40,17 @@ export var short_attrs_rev = { className: 'class', htmlFor: 'for' }
 // however this does:
 // h(2)
 // when common_tags = ['div','input','div.lala']
-export var common_tags = ['div']
+export let common_tags = ['div']
 
 function hyper_hermes (create_element) {
-  var cleanupFuncs = []
+  let cleanupFuncs = []
 
   function h(...args) {
-    var e
+    let e
     function item (l) {
-      var r, s, i, o, k
+      let r, s, i, o, k
       function parse_selector (string) {
-        var v, m = string.split(/([\.#]?[a-zA-Z0-9_:-]+)/)
+        let v, m = string.split(/([\.#]?[a-zA-Z0-9_:-]+)/)
         if (/^\.|#/.test(m[1])) e = create_element('div')
         // if (!root) root = e // the first element this
         for (v of m) {
@@ -91,7 +92,7 @@ function hyper_hermes (create_element) {
       } else if (typeof l === 'object') {
         for (k in l) set_attr(e, k, l[k], cleanupFuncs)
       } else if (typeof l === 'function') {
-        r = obvNode(e, l, cleanupFuncs)
+        r = make_obv_node(e, l, cleanupFuncs)
       }
 
       return r
@@ -106,7 +107,7 @@ function hyper_hermes (create_element) {
 
   h.cleanupFuncs = cleanupFuncs
   h.cleanup = () => {
-    for (var i = 0; i < cleanupFuncs.length; i++) {
+    for (let i = 0; i < cleanupFuncs.length; i++) {
       cleanupFuncs[i]()
     }
   }
@@ -114,27 +115,48 @@ function hyper_hermes (create_element) {
   return h
 }
 
+// these two probably need to be moved to dom-base
+// instead of saving them into a set, we just lookup_parent_with_attr(e, 'roadtrip')
+// export let roadtrips = new Set
+// this is so that custom attributes can be used to define custom behaviour
+export let custom_attrs = {
+  boink: (cleanupFuncs, e, fn) => { observe_event(cleanupFuncs, e, {boink: fn}) },
+  press: (cleanupFuncs, e, fn) => { observe_event(cleanupFuncs, e, {press: fn}) },
+  hover: (cleanupFuncs, e, fn) => { observe_event(cleanupFuncs, e, {hover: fn}) },
+  focused: (cleanupFuncs, e, fn) => { observe_event(cleanupFuncs, e, {focus: fn}) },
+  selected: (cleanupFuncs, e, fn) => { observe_event(cleanupFuncs, e, {select: fn}) },
+  input: (cleanupFuncs, e, fn) => { observe_event(cleanupFuncs, e, {input: fn}) },
+  go: (cleanupFuncs, e, url) => {
+    // call on next_tick, to make sure the element is added to the dom.
+    next_tick(() => {
+      // look upward to see if one of the container elements has a roadtrip in it
+      let roadtrip = lookup_parent_with_attr(e, 'roadtrip')
+      if (DEBUG && !roadtrip) {
+        console.info('element:', e)
+        error(`using 'go' attr when no roadtrip is defined for a parent element`)
+      } else {
+        roadtrip = roadtrip.roadtrip
+      }
+
+      // set the event handler:
+      observe_event(cleanupFuncs, e, {boink: () => {
+        roadtrip.goto(typeof url === 'function' ? url() : url)
+      }})
+    })
+  }
+}
+
 export function set_attr (e, key_, v, cleanupFuncs = []) {
   // convert short attributes to long versions. s -> style, c -> className
-  var s, o, i, k = short_attrs[key_] || key_
+  let s, o, i, k = short_attrs[key_] || key_
   if (typeof v === 'function') {
-    after(() => {
-      if (k === 'boink') {
-        observe.call(cleanupFuncs, e, {boink: v})
-      } else if (k === 'press') {
-        observe.call(cleanupFuncs, e, {press: v})
-      } else if (k === 'hover') {
-        observe.call(cleanupFuncs, e, {hover: v})
-      } else if (k === 'focused') {
-        observe.call(cleanupFuncs, e, {focus: v})
-      } else if (k === 'selected') {
-        observe.call(cleanupFuncs, e, {select: v})
-      } else if (k === 'input') {
-        observe.call(cleanupFuncs, e, {input: v})
+    next_tick(() => {
+      if (typeof(o = custom_attrs[k]) === 'function') {
+        o(cleanupFuncs, e, v)
       } else if (k.substr(0, 2) === 'on') {
-        add_event.call(cleanupFuncs, e, k.substr(2), v, false)
+        add_event(cleanupFuncs, e, k.substr(2), v, false)
       } else if (k.substr(0, 6) === 'before') {
-        add_event.call(cleanupFuncs, e, k.substr(6), v, true)
+        add_event(cleanupFuncs, e, k.substr(6), v, true)
       } else {
         // setAttribute was used here, primarily for svg support.
         // we may need to make a second version or something which works well with svg, perhaps instead using setAttributeNode
@@ -145,8 +167,8 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
           set_attr(e, k, v, cleanupFuncs)
         }, 1)) // 1 = do_immediately
         s = e.nodeName
-        s === "INPUT" && observe.call(cleanupFuncs, e, {input: v})
-        s === "SELECT" && observe.call(cleanupFuncs, e, k === 'label' ? {select_label: v} : {select: v})
+        s === "INPUT" && observe_event(cleanupFuncs, e, {input: v})
+        s === "SELECT" && observe_event(cleanupFuncs, e, k === 'label' ? {select_label: v} : {select: v})
       }
     })
   } else {
@@ -166,7 +188,7 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
     } else if (k === 'autoselect') {
       after(0.01, () => {
         e.focus()
-        var range = [v[0] || 0, v[1] || -1]
+        o = [v[0] || 0, v[1] || -1]
         e.setSelectionRange.apply(e, range)
       })
     } else if (k === 'selected') {
@@ -194,7 +216,7 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
       if (typeof v === 'object') {
         for (s in v)
           if (typeof (o = v[s]) === 'function')
-            add_event.call(cleanupFuncs, e, s, o, i ? false : true)
+            add_event(cleanupFuncs, e, s, o, i ? false : true)
       }
     } else if (k === 'html') {
       e.innerHTML = v
@@ -202,8 +224,7 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
       // I believe the set-timeout here is to allow the element time to be added to the dom.
       // it is likely that this is undesirable most of the time (because it can create a sense of a value 'popping' into the dom)
       // so, likely I'll want to move the whole thing out to a function which is called sometimes w/ set-timeout and sometimes not.
-      next_tick(observe.bind(cleanupFuncs, e, v))
-      // observe.call(cleanupFuncs, e, v)
+      next_tick(() => observe_event(cleanupFuncs, e, v))
     } else if (k === 'style') {
       if (typeof v === 'string') {
         e.style.cssText = v
@@ -213,12 +234,14 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
     } else if (~k.indexOf('-')) {
       // in weird cases with stuff like data- or other attrs containing hyphens, use setAttribute
       e.setAttribute(k, v)
-    } else if (typeof v !== 'undefined') {
-      // for namespaced attributes, such as xlink:href
-      // (I'm really not aware of any others than xlink... PRs accepted!)
-      // ref: http://stackoverflow.com/questions/7379319/how-to-use-creatensresolver-with-lookupnamespaceuri-directly
-      // ref: https://developer.mozilla.org/en-US/docs/Web/API/Document/createNSResolver
-      if (~(i = k.indexOf(':'))) {
+    } else if (v !== undefined) {
+      if (typeof(o = custom_attrs[k]) === 'function') {
+        o(cleanupFuncs, e, v)
+      } else if (~(i = k.indexOf(':'))) {
+        // for namespaced attributes, such as xlink:href
+        // (I'm really not aware of any others than xlink... PRs accepted!)
+        // ref: http://stackoverflow.com/questions/7379319/how-to-use-creatensresolver-with-lookupnamespaceuri-directly
+        // ref: https://developer.mozilla.org/en-US/docs/Web/API/Document/createNSResolver
         if (k.substr(0, i) === 'xlink') {
           e.setAttributeNS('http://www.w3.org/1999/xlink', k.substr(++i), v)
         } else {
@@ -236,25 +259,6 @@ export function set_attr (e, key_, v, cleanupFuncs = []) {
   }
 }
 
-export function set_style (e, style, cleanupFuncs = []) {
-  if (typeof style === 'object') {
-    for (var s in style) ((s, v) => {
-      if (typeof v === 'function') {
-        // observable
-        cleanupFuncs.push(v((v) => {
-          e.style[s] = typeof v === 'number' && s !== 'opacity' ? v + 'px' : v
-        }, 1))
-      } else {
-        // this is to make positioning elements a whole lot easier.
-        // if you want a numeric value for some reason for something other than px, coerce it to a string first, eg. {order: '1', 'grid-column-start': '3'}
-        e.style[s] = typeof v === 'number' && s !== 'opacity' ? v + 'px' : v
-      }
-    })(s, style[s])
-  } else {
-    e.setAttribute('style', style)
-  }
-}
-
 export function arrayFragment (e, arr, cleanupFuncs) {
   var v, frag = doc.createDocumentFragment()
   var activeElement = (el) => el === (e.activeElement || doc.activeElement)
@@ -265,7 +269,7 @@ export function arrayFragment (e, arr, cleanupFuncs) {
   // }
 
   // append nodes to the fragment, with parent node as e
-  for (v of arr) frag.aC(makeNode(e, v, cleanupFuncs))
+  for (v of arr) frag.aC(make_node(e, v, cleanupFuncs))
 
   if (arr.observable === 'array') {
     // TODO: add a comment to know where the array begins and ends (a la angular)
@@ -413,17 +417,17 @@ export function new_svg_context (no_cleanup) {
   return ctx
 }
 
-export const makeNode = (e, v, cleanupFuncs) => isNode(v) ? v
+export const make_node = (e, v, cleanupFuncs) => isNode(v) ? v
   : Array.isArray(v) ? arrayFragment(e, v, cleanupFuncs)
   : typeof v === 'function' ? (
-    is_obv(v) ? obvNode(e, v, cleanupFuncs) : (() => {
+    is_obv(v) ? make_obv_node(e, v, cleanupFuncs) : (() => {
       while (typeof v === 'function') v = v.call(e, e)
-      return makeNode(e, v, cleanupFuncs)
+      return make_node(e, v, cleanupFuncs)
     })()
   )
   : v == null ? comment('null') : txt(v)
 
-export const obvNode = (e, v, cleanupFuncs = []) => {
+export const make_obv_node = (e, v, cleanupFuncs = []) => {
   var r, o, nn, clean = [], placeholder
   if (typeof v === 'function') {
     if (is_obv(v)) {
@@ -431,7 +435,7 @@ export const obvNode = (e, v, cleanupFuncs = []) => {
       e.aC(r = comment('obv value'))
       e.aC(placeholder = comment('obv bottom'))
       cleanupFuncs.push(v((val) => {
-        nn = makeNode(e, val, cleanupFuncs)
+        nn = make_node(e, val, cleanupFuncs)
         if (Array.isArray(r)) {
           for (val of r) e.rC(val)
         } else if (r) {
@@ -445,12 +449,12 @@ export const obvNode = (e, v, cleanupFuncs = []) => {
       }), () => { e.rC(placeholder) })
     } else {
       // normal function
-      o = makeNode(e, v, cleanupFuncs)
+      o = make_node(e, v, cleanupFuncs)
       if (o != null) r = e.aC(o, cleanupFuncs)
     }
-    r = makeNode(e, r, cleanupFuncs)
+    r = make_node(e, r, cleanupFuncs)
   } else {
-    r = makeNode(e, v, cleanupFuncs)
+    r = make_node(e, v, cleanupFuncs)
   }
   return r
 }
@@ -459,9 +463,9 @@ export const obvNode = (e, v, cleanupFuncs = []) => {
 export const Node_prototype = Node.prototype
 
 // shortcut to append multiple children (w/ cleanupFuncs)
-Node_prototype.iB = function (el, ref, cleanupFuncs) { return this.insertBefore(obvNode(this, el, cleanupFuncs), ref) }
+Node_prototype.iB = function (el, ref, cleanupFuncs) { return this.insertBefore(make_obv_node(this, el, cleanupFuncs), ref) }
 // shortcut to append multiple children (w/ cleanupFuncs)
-Node_prototype.aC = function (el, cleanupFuncs) { return this.appendChild(isNode(el) ? el : obvNode(this, el, cleanupFuncs)) }
+Node_prototype.aC = function (el, cleanupFuncs) { return this.appendChild(isNode(el) ? el : make_obv_node(this, el, cleanupFuncs)) }
 // shortcut to removeChild
 // Node_prototype.rC = function (child) { return this.removeChild(child) }
 Node_prototype.rC = function (child) { return child.rm() }

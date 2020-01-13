@@ -6,7 +6,7 @@
 
 import requestAnimationFrame from './request-animation-frame'
 import { h } from './hyper-hermes'
-import { getStyleProperty } from './dom-base'
+import { get_style_prop } from './dom-base'
 
 
 /**
@@ -116,7 +116,7 @@ var ResizeSensor = function (element, callback) {
     //   '</div>'
     element.appendChild(element.resizeSensor)
 
-    if (getStyleProperty(element, 'position') == 'static') {
+    if (get_style_prop(element, 'position') == 'static') {
       element.style.position = 'relative'
     }
 

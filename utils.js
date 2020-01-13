@@ -6,7 +6,8 @@ import is_obj from './lodash/isObject'
 export function noop () {}
 
 export function error (message, type = Error) {
-  throw new type(message)
+  if (message instanceof Error) throw message
+  else throw new type(message)
 }
 
 export function __debug (msg) {
@@ -30,16 +31,6 @@ export function call_each (arr) {
 
 export function obj_aliases (proto, aliases) {
   for (let k in aliases) proto[k] = proto[aliases[k]]
-}
-
-export function parents (el, name) {
-  while (el && el.nodeName.toLowerCase() !== name) {
-    el = el.parentNode
-  }
-
-  return el && el.nodeName.toLowerCase() === name
-    ? el
-    : null
 }
 
 export const random_id = () => Math.random().toString(32).substr(2)
@@ -282,8 +273,8 @@ export const kind_of = (val) => val === null ? 'null'
   : {}.toString.call(val).slice(8, -1).toLowerCase()
 
 export function next_tick (cb, ...args) {
-  let id = setTimeout(cb, 0, ...args)
-  if (!cb) return new Promise((resolve) => cb = rexolve)
+  let id = setTimeout(cb, 1, ...args)
+  if (!cb) return new Promise((resolve) => cb = resolve)
   return id
 }
 

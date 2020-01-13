@@ -106,30 +106,26 @@ export function toggle (el, up_event, down_event) {
 // it's a little complicated though (see simulant).
 // it could be useful for indicating to the user where they should bo looking next.
 
-export function hover (e) { return toggle(e, 'mouseover', 'mouseout')}
-export function touch (e) { return toggle(e, 'touchstart', 'touchend')}
-export function mousedown (e) { return toggle(e, 'mousedown', 'mouseup')}
-export function focus (e) { return toggle(e, 'focus', 'blur')}
 
 // call like this `add_event.call(cleanupFuncs, el, listener, opts)`
 // furthermore, it may be wise to make the `cleanupFuncs = this` for all these type of functions
-export function add_event (e, event, listener, opts) {
+export function add_event (cleanupFuncs, e, event, listener, opts) {
   on(e, event, listener, opts)
-  this.push(() => { off(e, event, listener, opts) })
+  cleanupFuncs.push(() => { off(e, event, listener, opts) })
 }
 
 // https://www.html5rocks.com/en/mobile/touchandmouse/
 // https://www.html5rocks.com/en/mobile/touch/
 // look into `passive: true` as a replacement for the `preventDefault` functionality.
-export function boink (el, obv, opts) {
-  this.push(
+export function boink (cleanupFuncs, el, obv, opts) {
+  cleanupFuncs.push(
     listen(el, 'click', false, (ev) => { is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts),
     listen(el, 'touchstart', false, (ev) => { prevent_default(ev); is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts)
   )
 }
 
-export function press (el, obv, pressed = true, normal = false) {
-  this.push(
+export function press (cleanupFuncs, el, obv, pressed = true, normal = false) {
+  cleanupFuncs.push(
     listen(el, 'mouseup', false, () => { obv(normal) }),
     listen(el, 'mousedown', false, () => { obv(pressed) }),
     listen(el, 'touchend', false, (e) => { prevent_default(e); obv(normal) }),
@@ -137,19 +133,26 @@ export function press (el, obv, pressed = true, normal = false) {
   )
 }
 
-export function observe (el, observe_obj) {
-  var s, cleanupFuncs = this
-  for (s in observe_obj) ((s, v) => {
+export function observe_event (cleanupFuncs, el, observe_obj) {
+  let s, v
+  for (s in observe_obj) {
+    v = observe_obj[s]
     // observable
     switch (s) {
       case 'input':
         cleanupFuncs.push(attribute(el, observe_obj[s+'.attr'], observe_obj[s+'.on'])(v))
         break
       case 'hover':
-        cleanupFuncs.push(hover(el)(v))
+        cleanupFuncs.push(toggle(el, 'mouseover', 'mouseout')(v))
+        break
+      case 'touch':
+        cleanupFuncs.push(toggle(el, 'touchstart', 'touchend')(v))
+        break
+      case 'mousedown':
+        cleanupFuncs.push(toggle(el, 'mousedown', 'mouseup')(v))
         break
       case 'focus':
-        cleanupFuncs.push(focus(el)(v))
+        cleanupFuncs.push(toggle(el, 'focus', 'blur')(v))
         break
       case 'select_label':
         s = select(el, 'label')
@@ -169,10 +172,10 @@ export function observe (el, observe_obj) {
         )
         break
       case 'boink':
-        boink.call(cleanupFuncs, el, v)
+        boink(cleanupFuncs, el, v)
         break
       case 'press':
-        press.call(cleanupFuncs, el, v)
+        press(cleanupFuncs, el, v)
         break
       default:
       // case 'keyup':
@@ -186,5 +189,5 @@ export function observe (el, observe_obj) {
           // if (s === 'edit') debugger
         }
     }
-  })(s, observe_obj[s])
+  }
 }

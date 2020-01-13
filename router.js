@@ -1,7 +1,7 @@
 import Route from './route'
-import { parents, assign, isEmpty } from '@hyper/utils'
+import { assign, isEmpty } from '@hyper/utils'
 import { parseUri, parseQS, stringifyQS, stringifyHash, joinPaths } from '@hyper/router-utils'
-import { scrollTo } from '@hyper/dom/dom-base'
+import { scroll_to, lookup_parent_element } from '@hyper/dom/dom-base'
 
 import EventEmitter from './drip/emitter'
 
@@ -194,7 +194,7 @@ export default class Router extends EventEmitter {
     var _this = this
 
     document.body.addEventListener('click', this.unwatchLinks().linksWatcher = function (e) {
-      var el = parents(e.target, 'a')
+      var el = lookup_parent_element(e.target, 'a')
 
       if (el) {
         var href = el.getAttribute('href') || el.getAttribute('data-href')
