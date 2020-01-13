@@ -1,4 +1,4 @@
-import { mergeDeep, objJSON, random_id, extend } from '@hyper/utils'
+import { mergeDeep, objJSON, random_id, extend, next_tick } from '@hyper/utils'
 
 import { value } from '@hyper/dom/observable'
 import obj_value from '@hyper/obv/obj_value'
@@ -9,7 +9,8 @@ import { h } from '@hyper/dom/hyper-hermes'
 import { doc, body, win, base_path } from '@hyper/dom/dom-base'
 import { isNode, getElementById } from '@hyper/dom/dom-base'
 import { new_ctx, el_ctx, global_ctx } from '@hyper/dom/hyper-ctx'
-// import { makeNode } from '@hyper/dom/hyper-hermes'
+
+const raf = win.requestAnimationFrame
 
 function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _onload, _afterload) {
   let tmp, mutationObserver, id, G, ctx, E, width, height, _dpr, args
@@ -147,15 +148,22 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
         }
       }
 
-      resize = new ResizeSensor(frame, () => {
-        G.o.width(width = frame.clientWidth)
-        G.o.height(height = frame.clientHeight)
-        G.o.resize({width, height})
+      raf(() => {
+        resize = new ResizeSensor(frame, () => {
+          width = frame.clientWidth
+          height = frame.clientHeight
+          raf(() => {
+            G.o.width(width)
+            G.o.height(height)
+            G.o.resize({width, height})
+          })
+        })
+
+        G.cleanupFuncs.push(() => resize.detach())
       })
-      G.cleanupFuncs.push(() => resize.detach())
     }
 
-    if (doc.body) setTimeout(loader, 1)
+    if (doc.body) raf(loader)
     else win.addEventListener('DOMContentLoaded', loader, false)
   })(_onload)
 
