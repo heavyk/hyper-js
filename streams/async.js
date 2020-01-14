@@ -1,0 +1,47 @@
+import PushStream from '@hyper/streams/push'
+import { error } from '@hyper/error'
+
+export default class AsyncStream extends PushStream {
+  constructor (fn) {
+    this._fn = fn
+    this.buffer = []
+    this.paused = true
+    this._inflight = 0
+    this.source = this.sink = null
+    this.ended = false
+  }
+
+  write (data) {
+    var self = this
+    self.paused = true
+    self._inflight++
+    self._fn(data, function (err, _data) {
+      self._inflight--
+      if (err && err !== true) return self.sink.end(err)
+      else if (self.ended) {
+        return self.sink.write(_data), self.sink.end()
+      } else {
+        self.sink.write(_data)
+      }
+
+      if (self.paused && !self.sink.paused) {
+        self.paused = false
+        self.resume()
+      }
+    })
+  }
+
+  resume () {
+    if (!this._inflight) {
+      this.paused = false
+      if (this.ended) this.sink.end(this.ended === true ? null : this.ended)
+      else if (this.source) this.source.resume()
+    }
+  }
+
+  end (err) {
+    if (this.ended) error('called end twice')
+    this.ended = err || true
+    if (!this._inflight) this.sink.end(this.ended)
+  }
+}
