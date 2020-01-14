@@ -2,7 +2,19 @@
 import { is_obv, ensure_obv, bind2 } from '@hyper/dom/observable'
 import { on, off, dispatch_event, prevent_default } from '@hyper/dom/dom-base'
 
+const PASSIVE_AND_CAPTURE = { passive: true, capture: true }
+const PASSIVE = { passive: true }
+
 export function listen (element, event, attr, listener, do_immediately, opts) {
+  // by default, for performeance reasons, passive events are used.
+  // if preventDefault is called, chrome will spit out an error.
+  // the solution is to simply pass your own opts:
+  // eg. listen(..., { passive: false, capture: true })
+  //             -kenny 14-01-2020
+
+  opts = opts === true ? PASSIVE_AND_CAPTURE
+    : opts === false ? CAPTURE : opts
+
   let on_event = (e) => { listener(typeof attr === 'function' ? attr() : attr ? element[attr] : e) }
   on(element, event, on_event, opts)
   do_immediately && attr && on_event()
@@ -119,17 +131,17 @@ export function add_event (cleanupFuncs, e, event, listener, opts) {
 // look into `passive: true` as a replacement for the `preventDefault` functionality.
 export function boink (cleanupFuncs, el, obv, opts) {
   cleanupFuncs.push(
-    listen(el, 'click', false, (ev) => { is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts),
-    listen(el, 'touchstart', false, (ev) => { prevent_default(ev); is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts)
+    listen(el, 'click', PASSIVE_AND_CAPTURE, (ev) => { is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts),
+    listen(el, 'touchstart', PASSIVE_AND_CAPTURE, (ev) => { prevent_default(ev); is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts)
   )
 }
 
 export function press (cleanupFuncs, el, obv, pressed = true, normal = false) {
   cleanupFuncs.push(
-    listen(el, 'mouseup', false, () => { obv(normal) }),
-    listen(el, 'mousedown', false, () => { obv(pressed) }),
-    listen(el, 'touchend', false, (e) => { prevent_default(e); obv(normal) }),
-    listen(el, 'touchstart', false, (e) => { prevent_default(e); obv(pressed) })
+    listen(el, 'mouseup', PASSIVE, () => { obv(normal) }),
+    listen(el, 'mousedown', PASSIVE, () => { obv(pressed) }),
+    listen(el, 'touchend', PASSIVE, (e) => { prevent_default(e); obv(normal) }),
+    listen(el, 'touchstart', PASSIVE, (e) => { prevent_default(e); obv(pressed) })
   )
 }
 
