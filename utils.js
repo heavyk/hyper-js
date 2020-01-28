@@ -273,10 +273,18 @@ export const kind_of = (val) => val === null ? 'null'
   : Array.isArray(val) ? 'array'
   : {}.toString.call(val).slice(8, -1).toLowerCase()
 
+let next_ticks = []
 export function next_tick (cb, ...args) {
-  let id = setTimeout(cb, 1, ...args)
-  if (!cb) return new Promise((resolve) => cb = resolve)
-  return id
+  if (!next_ticks.i) {
+    next_ticks.i = setTimeout(() => {
+      for (let n, i = 0; i < next_ticks.length; i++)
+        next_ticks[i].c.apply(null, next_ticks[i].a)
+      next_ticks = []
+    }, 1)
+  }
+  if (!cb) next_ticks.p = new Promise((resolve) => cb = resolve)
+  next_ticks.push({c: cb, a: args})
+  return next_ticks.p
 }
 
 export function after (seconds, cb, ...args) {
