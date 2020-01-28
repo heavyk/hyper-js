@@ -33,6 +33,7 @@ export function obj_aliases (proto, aliases) {
   for (let k in aliases) proto[k] = proto[aliases[k]]
 }
 
+export const int = (s) => parseInt(s, 10)
 export const random_id = () => Math.random().toString(32).substr(2)
 export const random_idx = (len) => Math.floor(Math.random() * len)
 export const random_int = (max, min = 0) => min + Math.floor(Math.random() * (max - min))

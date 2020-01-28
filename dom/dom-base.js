@@ -24,6 +24,14 @@ export const href_pathname = (href) => (anchor.href = href, anchor.pathname)
 export const href_query = (href) => (anchor.href = href, anchor.search.slice(1).split('&'))
 export const href_hash = (href) => (anchor.href = href, anchor.hash.slice(1))
 
+export const get_prop_value = (obj, prop) => obj.getPropertyValue(prop)
+export const int_prop_value = (obj, prop) => int(obj.getPropertyValue(prop))
+export const sum_prop_values = (obj, props) => (
+  Array.isArray(props) ? props : props.split('|')
+).reduce((total, prop) => {
+  return total + int_prop_value(obj, prop)
+}, 0)
+
 export function scroll_to (id_or_el) {
   let el = getElementById(id_or_el)
 
