@@ -465,7 +465,7 @@ export const Node_prototype = Node.prototype
 // shortcut to append multiple children (w/ cleanupFuncs)
 Node_prototype.iB = function (el, ref, cleanupFuncs) { return this.insertBefore(make_obv_node(this, el, cleanupFuncs), ref) }
 // shortcut to append multiple children (w/ cleanupFuncs)
-Node_prototype.aC = function (el, cleanupFuncs) { return this.appendChild(isNode(el) ? el : make_obv_node(this, el, cleanupFuncs)) }
+Node_prototype.aC = function (el, cleanupFuncs) { return this.appendChild(isNode(el) ? (el.parentNode !== this ? el : undefined) : make_obv_node(this, el, cleanupFuncs)) }
 // shortcut to removeChild
 // Node_prototype.rC = function (child) { return this.removeChild(child) }
 Node_prototype.rC = function (child) { return child.rm() }
