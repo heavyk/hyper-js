@@ -130,18 +130,20 @@ export function add_event (cleanupFuncs, e, event, listener, opts) {
 // https://www.html5rocks.com/en/mobile/touch/
 // look into `passive: true` as a replacement for the `preventDefault` functionality.
 export function boink (cleanupFuncs, el, obv, opts) {
+  // passing attr=0 here to tell it to not grab the value of any attribute on the el.
   cleanupFuncs.push(
-    listen(el, 'click', PASSIVE_AND_CAPTURE, (ev) => { is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts),
-    listen(el, 'touchstart', PASSIVE_AND_CAPTURE, (ev) => { prevent_default(ev); is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts)
+    listen(el, 'click', 0, (ev) => { is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts),
+    listen(el, 'touchstart', 0, (ev) => { prevent_default(ev); is_obv(obv) ? obv(!obv()) : obv.call(el, ev) }, 0, opts)
   )
 }
 
 export function press (cleanupFuncs, el, obv, pressed = true, normal = false) {
+  // passing attr=0 here to tell it to not grab the value of any attribute on the el.
   cleanupFuncs.push(
-    listen(el, 'mouseup', PASSIVE, () => { obv(normal) }),
-    listen(el, 'mousedown', PASSIVE, () => { obv(pressed) }),
-    listen(el, 'touchend', PASSIVE, (e) => { prevent_default(e); obv(normal) }),
-    listen(el, 'touchstart', PASSIVE, (e) => { prevent_default(e); obv(pressed) })
+    listen(el, 'mouseup', 0, () => { obv(normal) }),
+    listen(el, 'mousedown', 0, () => { obv(pressed) }),
+    listen(el, 'touchend', 0, (e) => { prevent_default(e); obv(normal) }),
+    listen(el, 'touchstart', 0, (e) => { prevent_default(e); obv(pressed) })
   )
 }
 
