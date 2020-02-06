@@ -36,27 +36,22 @@ function nlElastic (node, keypath, padding = 24) {
       (SUPPORT_ANCIENT ? '-webkit-box-sizing: content-box; -moz-box-sizing: content-box;') +
       'min-height: 0 !important; height: 0 !important; padding: 0;' +
       'word-wrap: break-word; border: 0;'
-  let mirror = h('textarea', {
-      aria: { hidden: 'true' },
-      tabindex: -1,
-      style: mirrorInitStyle,
-      data: { elastic: true },
-    })
+
   let taStyle = getComputedStyle(ta)
   let resize = get_prop_value(taStyle, 'resize')
   let borderBox = get_prop_value(taStyle, 'box-sizing') === 'border-box' || (SUPPORT_ANCIENT && (
       get_prop_value(taStyle, '-moz-box-sizing') === 'border-box' ||
       get_prop_value(taStyle, '-webkit-box-sizing') === 'border-box'))
   let boxOuter = !borderBox ? {width: 0, height: 0} : {
-      width: sum_prop_values(taStyle, 'border-right-width|padding-right|padding-left|border-left-width'),
-      height: sum_prop_values(taStyle, 'border-top-width|padding-top|padding-bottom|border-bottom-width'),
-    }
+    width: sum_prop_values(taStyle, 'border-right-width|padding-right|padding-left|border-left-width'),
+    height: sum_prop_values(taStyle, 'border-top-width|padding-top|padding-bottom|border-bottom-width'),
+  }
   let minHeightValue = int_prop_value(taStyle, 'min-height')
   let heightValue = int_prop_value(taStyle, 'height')
   let minHeight = Math.max(minHeightValue, heightValue) - boxOuter.height
   let maxHeight = int_prop_value(taStyle, 'max-height')
   let copyStyle = 'font-family|font-size|font-weight|font-style|letter-spacing|line-height|text-transform|word-spacing|text-indent'.split('|')
-  let mirrored, active
+  let mirrored, active, mirror
 
   if (SUPPORT_ANCIENT) {
       // Opera returns max-height of -1 if not set
@@ -64,7 +59,12 @@ function nlElastic (node, keypath, padding = 24) {
   }
 
   // append mirror to the DOM
-  body.aC(mirror)
+  body.aC(mirror = h('textarea', {
+    aria: { hidden: 'true' },
+    tabindex: -1,
+    style: mirrorInitStyle,
+    data: { elastic: true },
+  }))
 
   // set resize and apply elastic
   $ta.style.resize =  (resize === 'none' || resize === 'vertical') ? 'none' : 'horizontal'
@@ -99,9 +99,7 @@ function nlElastic (node, keypath, padding = 24) {
       // probably want to do it in an animation frame or something... eg. read it all, then set it in raf
       let taHeight = ta.style.height === '' ? 'auto' : int(ta.style.height)
       let taComputedStyleWidth = get_prop_value(getComputedStyle(ta), 'width')
-      let mirrorHeight
-      let width
-      let overflow
+      let mirrorHeight, width, overflow
       active = true
 
       mirror.value = ta.value // optional whitespace to improve animation
