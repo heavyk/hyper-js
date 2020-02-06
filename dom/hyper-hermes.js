@@ -126,20 +126,23 @@ export let custom_attrs = {
   focused: (cleanupFuncs, e, fn) => { observe_event(cleanupFuncs, e, {focus: fn}) },
   selected: (cleanupFuncs, e, fn) => { observe_event(cleanupFuncs, e, {select: fn}) },
   input: (cleanupFuncs, e, fn) => { observe_event(cleanupFuncs, e, {input: fn}) },
-  go: (cleanupFuncs, e, url) => {
+  go: (cleanupFuncs, e, url, roadtrip) => {
     // call on next_tick, to make sure the element is added to the dom.
     next_tick(() => {
-      // look upward to see if one of the container elements has a roadtrip in it
-      let roadtrip = lookup_parent_with_attr(e, 'roadtrip')
-      if (DEBUG && !roadtrip) {
-        console.info('element:', e)
-        error(`using 'go' attr when no roadtrip is defined for a parent element`)
-      } else {
-        roadtrip = roadtrip.roadtrip
-      }
-
       // set the event handler:
       observe_event(cleanupFuncs, e, {boink: () => {
+        if (!roadtrip) {
+          // look upward to see if one of the container elements has a roadtrip in it
+          roadtrip = lookup_parent_with_attr(e, 'roadtrip')
+          if (DEBUG && !roadtrip) {
+            console.info('element:', e)
+            error(`using 'go' attr when no roadtrip is defined for a parent element`)
+          } else {
+            if (DEBUG) console.log(`found roadtrip`, roadtrip, `for element:`, e, e.parentNode)
+            roadtrip = roadtrip.roadtrip
+          }
+        }
+
         roadtrip.goto(typeof url === 'function' ? url() : url)
       }})
     })
