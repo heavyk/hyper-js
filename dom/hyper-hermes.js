@@ -90,9 +90,19 @@ function hyper_hermes (create_element) {
       } else if (isNode(l) || l instanceof win.Text) {
         e.aC(r = l)
       } else if (typeof l === 'object') {
-        for (k in l) set_attr(e, k, l[k], cleanupFuncs)
+        // is a promise
+        if (typeof l.then === 'function') {
+          e.aC(r = comment(DEBUG ? '1:promise-value' : 1))
+          l.then((v) => {
+            let node = make_node(e, v, cleanupFuncs)
+            if (DEBUG && r.parentNode !== e) error('promise unable to insert itself into the dom because parentNode has changed')
+            else e.rC(node, r)
+          })
+        } else for (k in l) set_attr(e, k, l[k], cleanupFuncs)
       } else if (typeof l === 'function') {
         r = make_obv_node(e, l, cleanupFuncs)
+      } else if (DEBUG) {
+        error('unknown/unsupported item being appended to element')
       }
 
       return r
@@ -420,36 +430,45 @@ export function new_svg_context (no_cleanup) {
   return ctx
 }
 
-export const make_node = (e, v, cleanupFuncs) => isNode(v) ? v
-  : Array.isArray(v) ? arrayFragment(e, v, cleanupFuncs)
-  : typeof v === 'function' ? (
-    is_obv(v) ? make_obv_node(e, v, cleanupFuncs) : (() => {
-      while (typeof v === 'function') v = v.call(e, e)
-      return make_node(e, v, cleanupFuncs)
-    })()
-  )
-  : v == null ? comment('null') : txt(v)
+export function make_node (e, v, cleanupFuncs, placeholder) {
+  return  isNode(v) ? v
+    : Array.isArray(v) ? arrayFragment(e, v, cleanupFuncs)
+    : typeof v === 'function' ? (
+      is_obv(v) ? make_obv_node(e, v, cleanupFuncs) : (() => {
+        while (typeof v === 'function') v = v.call(e, e)
+        return make_node(e, v, cleanupFuncs)
+      })()
+    )
+    : v == null ? comment(DEBUG ? '0:null' : 0)
+    : typeof v.then === 'function' ? (v.then((v) => {
+      let node = make_node(e, v, cleanupFuncs)
+      if (DEBUG && placeholder.parentNode !== e) error('promise unable to insert itself into the dom because parentNode has changed')
+      else e.rC(node, placeholder)
+    }), placeholder = comment(DEBUG ? '2:promise-value' : 2))
+    : txt(v)
+}
 
-export const make_obv_node = (e, v, cleanupFuncs = []) => {
-  var r, o, nn, clean = [], placeholder
+export function make_obv_node (e, v, cleanupFuncs = []) {
+  let r, o, nn, clean = [], placeholder
   if (typeof v === 'function') {
     if (is_obv(v)) {
       // observable
-      e.aC(r = comment('obv value'))
-      e.aC(placeholder = comment('obv bottom'))
+      e.aC(r = comment(DEBUG ? '3:obv-value' : 3))
+      e.aC(placeholder = comment(DEBUG ? '4:obv-bottom' : 4))
       cleanupFuncs.push(v((val) => {
         nn = make_node(e, val, cleanupFuncs)
         if (Array.isArray(r)) {
-          for (val of r) e.rC(val)
+          for (val of r) e.rm(val)
         } else if (r) {
-          if (r.parentNode === e) e.rC(r)
-          // this should never really happen. probably some better way to report the error should be in order.
-          else error('obv unable to replace child node because parentNode has changed')
+          if (DEBUG && r.parentNode !== e) error('obv unable to replace child node because parentNode has changed')
+          else e.rC(nn, r)
         }
 
         e.iB(nn, placeholder)
         r = Array.isArray(val) ? val : nn
-      }), () => { e.rC(placeholder) })
+      }), () => {
+        e.rC(placeholder)
+      })
     } else {
       // normal function
       o = make_node(e, v, cleanupFuncs)
@@ -469,9 +488,8 @@ export const Node_prototype = Node.prototype
 Node_prototype.iB = function (el, ref, cleanupFuncs) { return this.insertBefore(make_obv_node(this, el, cleanupFuncs), ref) }
 // shortcut to append multiple children (w/ cleanupFuncs)
 Node_prototype.aC = function (el, cleanupFuncs) { return this.appendChild(isNode(el) ? (el.parentNode !== this ? el : undefined) : make_obv_node(this, el, cleanupFuncs)) }
-// shortcut to removeChild
-// Node_prototype.rC = function (child) { return this.removeChild(child) }
-Node_prototype.rC = function (child) { return child.rm() }
+// shortcut to replaceChild
+Node_prototype.rC = function (new_child, old_child) { return this.replaceChild(new_child, old_child) }
 // shortcut to apply attributes as if they were the second argument to `h('.lala', {these ones}, ...)`
 Node_prototype.apply = function (obj, cleanupFuncs) {
   for (let k in obj) set_attr(this, k, obj[k], cleanupFuncs)

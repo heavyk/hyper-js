@@ -135,7 +135,7 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
 
       // remove all html comments from the body (I rememeber they caused problems, but I don't remember exatly what..)
       while (e = body.childNodes[i])
-        if (e.nodeName[0] === '#') body.rC(e)
+        if (e.nodeName[0] === '#') body.rm(e)
         else i++
 
       // it would be really cool if this would work with generators, promises, async and normal functions

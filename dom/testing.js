@@ -159,7 +159,7 @@ export class FixtureInteraction extends PromiseQueue {
       var input = hh('input')
       body.aC(input)
       input.focus()
-      body.rC(input)
+      body.rm(input)
       resolve()
     }))
     return cb ? this.then(cb) : this
