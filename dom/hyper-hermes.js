@@ -148,7 +148,6 @@ export let custom_attrs = {
             console.info('element:', e)
             error(`using 'go' attr when no roadtrip is defined for a parent element`)
           } else {
-            if (DEBUG) console.log(`found roadtrip`, roadtrip, `for element:`, e, e.parentNode)
             roadtrip = roadtrip.roadtrip
           }
         }

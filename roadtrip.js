@@ -13,6 +13,7 @@ import { noop, slasher, which, error } from '@hyper/utils'
 import isEqual from '@hyper/isEqual'
 
 const QUERYPAIR_REGEX = /^([\w\-]+)(?:=([^&]*))?$/
+const SEGMENT_PARAM_REGEX = /^:([\w\-]+)\??$/
 const HANDLERS = [ 'beforeenter', 'enter', 'leave', 'update' ]
 
 function get_internal_link_element (event) {
@@ -104,7 +105,7 @@ class Route {
         let segment_to_match = _segments[i]
 
         if (segment_to_match[0] === ':') {
-          matches = /^:([\w\-]+)?\?/.exec(segment_to_match)
+          matches = SEGMENT_PARAM_REGEX.exec(segment_to_match)
           params[matches[1]] = segment
         } else if (segment !== segment_to_match) {
           return false
