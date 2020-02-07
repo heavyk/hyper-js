@@ -21,11 +21,7 @@ export default class InlineLexer {
       error('Tokens array requires a `links` property.')
     }
 
-    // if (this.options.breaks) {
-      this.rules = inline.breaks
-    // } else {
-    //   this.rules = inline.gfm
-    // }
+    this.rules = inline.breaks
   }
 
   /**
@@ -47,7 +43,7 @@ export default class InlineLexer {
    * Lexing/Compiling
    */
   output (src) {
-    let out = '',
+    let out = [],
       link,
       text,
       href,
@@ -59,12 +55,11 @@ export default class InlineLexer {
       // escape
       if (cap = this.rules.escape.exec(src)) {
         src = src.substring(cap[0].length)
-        out += escape(cap[1])
-        continue
+        out.push(escape(cap[1]))
       }
 
       // tag
-      if (cap = this.rules.tag.exec(src)) {
+      else if (cap = this.rules.tag.exec(src)) {
         if (!this.inLink && /^<a /i.test(cap[0])) {
           this.inLink = true
         } else if (this.inLink && /^<\/a>/i.test(cap[0])) {
@@ -77,12 +72,13 @@ export default class InlineLexer {
         }
 
         src = src.substring(cap[0].length)
-        out += cap[0]
-        continue
+        // out += cap[0]
+        // not sure how to do this one...
+        debugger
       }
 
       // link
-      if (cap = this.rules.link.exec(src)) {
+      else if (cap = this.rules.link.exec(src)) {
         const lastParenIndex = findClosingBracket(cap[2], '()')
         if (lastParenIndex > -1) {
           const start = cap[0].indexOf('!') === 0 ? 5 : 4
@@ -107,68 +103,64 @@ export default class InlineLexer {
           title = cap[3] ? cap[3].slice(1, -1) : ''
         }
         href = href.trim().replace(/^<([\s\S]*)>$/, '$1')
-        out += this.outputLink(cap, {
+        out.push(this.outputLink(cap, {
           href: InlineLexer.escapes(href),
           title: InlineLexer.escapes(title)
-        })
+        }))
         this.inLink = false
-        continue
       }
 
       // reflink, nolink
-      if ((cap = this.rules.reflink.exec(src))
+      else if ((cap = this.rules.reflink.exec(src))
         || (cap = this.rules.nolink.exec(src))) {
         src = src.substring(cap[0].length)
         link = (cap[2] || cap[1]).replace(/\s+/g, ' ')
         link = this.links[link.toLowerCase()]
         if (!link || !link.href) {
-          out += cap[0].charAt(0)
+          // out += cap[0].charAt(0)
+          // not sure if this is right...
+          out.push(cap[0].charAt(0))
+          debugger
           src = cap[0].substring(1) + src
-          continue
+        } else {
+          this.inLink = true
+          out.push(this.outputLink(cap, link))
+          this.inLink = false
         }
-        this.inLink = true
-        out += this.outputLink(cap, link)
-        this.inLink = false
-        continue
       }
 
       // strong
-      if (cap = this.rules.strong.exec(src)) {
+      else if (cap = this.rules.strong.exec(src)) {
         src = src.substring(cap[0].length)
-        out += this.renderer.strong(this.output(cap[4] || cap[3] || cap[2] || cap[1]))
-        continue
+        out.push(this.renderer.strong(this.output(cap[4] || cap[3] || cap[2] || cap[1])))
       }
 
       // em
-      if (cap = this.rules.em.exec(src)) {
+      else if (cap = this.rules.em.exec(src)) {
         src = src.substring(cap[0].length)
-        out += this.renderer.em(this.output(cap[6] || cap[5] || cap[4] || cap[3] || cap[2] || cap[1]))
-        continue
+        out.push(this.renderer.em(this.output(cap[6] || cap[5] || cap[4] || cap[3] || cap[2] || cap[1])))
       }
 
       // code
-      if (cap = this.rules.code.exec(src)) {
+      else if (cap = this.rules.code.exec(src)) {
         src = src.substring(cap[0].length)
-        out += this.renderer.codespan(escape(cap[2].trim(), true))
-        continue
+        out.push(this.renderer.codespan(escape(cap[2].trim(), true)))
       }
 
       // br
-      if (cap = this.rules.br.exec(src)) {
+      else if (cap = this.rules.br.exec(src)) {
         src = src.substring(cap[0].length)
-        out += this.renderer.br()
-        continue
+        out.push(this.renderer.br())
       }
 
       // del (gfm)
-      if (cap = this.rules.del.exec(src)) {
+      else if (cap = this.rules.del.exec(src)) {
         src = src.substring(cap[0].length)
-        out += this.renderer.del(this.output(cap[1]))
-        continue
+        out.push(this.renderer.del(this.output(cap[1])))
       }
 
       // autolink
-      if (cap = this.rules.autolink.exec(src)) {
+      else if (cap = this.rules.autolink.exec(src)) {
         src = src.substring(cap[0].length)
         if (cap[2] === '@') {
           text = escape(this.mangle(cap[1]))
@@ -177,12 +169,11 @@ export default class InlineLexer {
           text = escape(cap[1])
           href = text
         }
-        out += this.renderer.link(href, null, text)
-        continue
+        out.push(this.renderer.link(href, null, text))
       }
 
       // url (gfm)
-      if (!this.inLink && (cap = this.rules.url.exec(src))) {
+      else if (!this.inLink && (cap = this.rules.url.exec(src))) {
         if (cap[2] === '@') {
           text = escape(cap[0])
           href = 'mailto:' + text
@@ -200,23 +191,21 @@ export default class InlineLexer {
           }
         }
         src = src.substring(cap[0].length)
-        out += this.renderer.link(href, null, text)
-        continue
+        out.push(this.renderer.link(href, null, text))
       }
 
       // text
-      if (cap = this.rules.text.exec(src)) {
+      else if (cap = this.rules.text.exec(src)) {
         src = src.substring(cap[0].length)
         if (this.inRawBlock) {
-          out += this.renderer.text(cap[0])
+          out.push(this.renderer.text(cap[0]))
         } else {
-          out += this.renderer.text(escape(this.smartypants(cap[0])))
+          out.push(this.renderer.text(escape(this.smartypants(cap[0]))))
         }
-        continue
       }
 
-      if (src) {
-        throw new Error('Infinite loop on byte: ' + src.charCodeAt(0))
+      else if (src) {
+        error('Infinite loop on byte: ' + src.charCodeAt(0))
       }
     }
 

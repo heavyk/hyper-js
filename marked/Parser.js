@@ -92,7 +92,7 @@ export default class Parser {
         return this.renderer.heading(
           this.inline.output(this.token.text),
           this.token.depth,
-          unescape(this.inlineText.output(this.token.text)),
+          this.inlineText.output(this.token.text),
           this.slugger
         )
       }

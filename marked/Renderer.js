@@ -39,7 +39,7 @@ export default class Renderer {
 
   heading (text, level, raw, slugger) {
     return this.options.headerIds
-      ? h('h'+level, {id: this.options.headerPrefix + slugger(raw)}, text)
+      ? h('h'+level, {id: this.options.headerPrefix + slugger(h(0, raw).textContent)}, text)
       : h('h'+level, text)
   }
 
@@ -48,9 +48,6 @@ export default class Renderer {
   }
 
   list (body, ordered, start) {
-    // const type = ordered ? 'ol' : 'ul',
-    //   startatt = (ordered && start !== 1) ? (' start="' + start + '"') : ''
-    // return '<' + type + startatt + '>\n' + body + '</' + type + '>\n'
     return h(ordered ? 'ol' : 'ul', {start: ordered && start !== 1 ? start : undefined}, body)
   }
 
