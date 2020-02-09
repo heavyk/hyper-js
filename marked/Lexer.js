@@ -195,6 +195,9 @@ export default class Lexer {
         continue
       }
 
+      // link
+      // if (cap = this.rules.)
+
       // list
       if (cap = this.rules.list.exec(src)) {
         src = src.substring(cap[0].length)

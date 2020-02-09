@@ -11,11 +11,11 @@ import { merge, error } from '@hyper/utils'
  * Parsing & Compiling
  */
 export default class Parser {
-  constructor (options) {
+  constructor (G, options) {
     this.tokens = []
     this.token = null
     this.options = options || defaults
-    this.options.renderer = this.options.renderer || new Renderer()
+    this.options.renderer = this.options.renderer || Renderer(G)
     this.renderer = this.options.renderer
     this.renderer.options = this.options
     this.slugger = Slugger()
@@ -24,8 +24,8 @@ export default class Parser {
   /**
    * Static Parse Method
    */
-  static parse (tokens, options) {
-    return new Parser(options).parse(tokens)
+  static parse (G, tokens, options) {
+    return new Parser(G, options).parse(tokens)
   }
 
   /**
@@ -114,21 +114,24 @@ export default class Parser {
             { header: true, align: this.token.align[i]}
           ))
         }
-        header.push(this.renderer.tablerow(cell))
 
+        header.push(this.renderer.tablerow(cell))
         for (i = 0; i < this.token.cells.length; i++) {
           row = this.token.cells[i]
 
           cell = ''
           for (j = 0; j < row.length; j++) {
-            cell.push(this.renderer.tablecell(
-              this.inline.output(row[j]),
-              { header: false, align: this.token.align[j]}
-            ))
+            cell.push(
+              this.renderer.tablecell(
+                this.inline.output(row[j]),
+                { header: false, align: this.token.align[j]}
+              )
+            )
           }
 
           cells.push(this.renderer.tablerow(cell))
         }
+
         return this.renderer.table(header, cells)
       }
       case 'blockquote_start': {

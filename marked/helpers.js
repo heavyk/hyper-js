@@ -16,17 +16,9 @@ const escapeReplacements = {
 }
 const getEscapeReplacement = (ch) => escapeReplacements[ch]
 export function escape (html, encode) {
-  if (encode) {
-    if (escapeTest.test(html)) {
-      return html.replace(escapeReplace, getEscapeReplacement)
-    }
-  } else {
-    if (escapeTestNoEncode.test(html)) {
-      return html.replace(escapeReplaceNoEncode, getEscapeReplacement)
-    }
-  }
-
-  return html
+  return escapeTestNoEncode.test(html)
+    ? html.replace(escapeReplaceNoEncode, getEscapeReplacement)
+    : html
 }
 
 const unescapeTest = /&(#(?:\d+)|(?:#x[0-9A-Fa-f]+)|(?:\w+));?/ig

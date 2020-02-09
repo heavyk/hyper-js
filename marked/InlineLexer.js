@@ -1,9 +1,15 @@
 import Renderer from './Renderer.js'
 import { defaults } from './defaults.js'
 import { inline } from './rules.js'
-import { findClosingBracket, escape } from './helpers.js'
+import { findClosingBracket } from './helpers.js'
 
 import { error } from '@hyper/utils'
+import { h } from '@hyper/dom/hyper-hermes'
+
+// function to unescape text such as: \[notalink\]\(neither this\) -> [notalink](neither this)
+function unescapes (text) {
+  return text ? text.replace(inline._escapes, '$1') : text
+}
 
 /**
  * Inline Lexer & Compiler
@@ -25,13 +31,6 @@ export default class InlineLexer {
   }
 
   /**
-   * Expose Inline Rules
-   */
-  static get rules () {
-    return inline
-  }
-
-  /**
    * Static Lexing/Compiling Method
    */
   static output (src, links, options) {
@@ -44,18 +43,27 @@ export default class InlineLexer {
    */
   output (src) {
     let out = [],
+      last,
       link,
       text,
       href,
-      title,
       cap,
       prevCapZero
+
+    function append (it) {
+      if (typeof it === 'string' && typeof last === 'string') {
+        // append
+        last = (out[out.length - 1] += it)
+      } else {
+        out.push(last = it)
+      }
+    }
 
     while (src) {
       // escape
       if (cap = this.rules.escape.exec(src)) {
         src = src.substring(cap[0].length)
-        out.push(escape(cap[1]))
+        append(cap[1])
       }
 
       // tag
@@ -65,6 +73,7 @@ export default class InlineLexer {
         } else if (this.inLink && /^<\/a>/i.test(cap[0])) {
           this.inLink = false
         }
+        // raw block means that text is output exactly as it's written and isn't transformed by markdown
         if (!this.inRawBlock && /^<(pre|code|kbd|script)(\s|>)/i.test(cap[0])) {
           this.inRawBlock = true
         } else if (this.inRawBlock && /^<\/(pre|code|kbd|script)(\s|>)/i.test(cap[0])) {
@@ -74,38 +83,33 @@ export default class InlineLexer {
         src = src.substring(cap[0].length)
         // out += cap[0]
         // not sure how to do this one...
-        debugger
+        if (cap[1]) {
+          let el = h(0, {html: cap[0]})
+          debugger
+          append(el.firstChild)
+        }
+        // if (cap[1]) append(this.renderer.el(cap[1], cap[2]))
+        if (cap[1]) debugger
       }
 
       // link
       else if (cap = this.rules.link.exec(src)) {
-        const lastParenIndex = findClosingBracket(cap[2], '()')
+        const lastParenIndex = findClosingBracket(cap[3], '()')
         if (lastParenIndex > -1) {
-          const start = cap[0].indexOf('!') === 0 ? 5 : 4
-          const linkLen = start + cap[1].length + lastParenIndex
-          cap[2] = cap[2].substring(0, lastParenIndex)
+          // I don't understand when this case is hit. I can't seem to get it to go
+          debugger
+          const linkLen = (cap[1] ? 5 : 4) + cap[2].length + lastParenIndex
+          cap[3] = cap[3].substring(0, lastParenIndex)
           cap[0] = cap[0].substring(0, linkLen).trim()
-          cap[3] = ''
+          cap[4] = ''
         }
+
         src = src.substring(cap[0].length)
         this.inLink = true
-        href = cap[2]
-        if (this.options.pedantic) {
-          link = /^([^'"]*[^\s])\s+(['"])(.*)\2/.exec(href)
-
-          if (link) {
-            href = link[1]
-            title = link[3]
-          } else {
-            title = ''
-          }
-        } else {
-          title = cap[3] ? cap[3].slice(1, -1) : ''
-        }
-        href = href.trim().replace(/^<([\s\S]*)>$/, '$1')
-        out.push(this.outputLink(cap, {
-          href: InlineLexer.escapes(href),
-          title: InlineLexer.escapes(title)
+        href = cap[3].trim().replace(/^<([\s\S]*)>$/, '$1')
+        append(this.outputLink(cap, {
+          href: unescapes(href),
+          title: unescapes(cap[4] && cap[4].slice(1, -1))
         }))
         this.inLink = false
       }
@@ -114,17 +118,17 @@ export default class InlineLexer {
       else if ((cap = this.rules.reflink.exec(src))
         || (cap = this.rules.nolink.exec(src))) {
         src = src.substring(cap[0].length)
-        link = (cap[2] || cap[1]).replace(/\s+/g, ' ')
+        link = (cap[3] || cap[2]).replace(/\s+/g, ' ')
         link = this.links[link.toLowerCase()]
         if (!link || !link.href) {
           // out += cap[0].charAt(0)
           // not sure if this is right...
-          out.push(cap[0].charAt(0))
+          append(cap[0].charAt(0))
           debugger
           src = cap[0].substring(1) + src
         } else {
           this.inLink = true
-          out.push(this.outputLink(cap, link))
+          append(this.outputLink(cap, link))
           this.inLink = false
         }
       }
@@ -132,31 +136,31 @@ export default class InlineLexer {
       // strong
       else if (cap = this.rules.strong.exec(src)) {
         src = src.substring(cap[0].length)
-        out.push(this.renderer.strong(this.output(cap[4] || cap[3] || cap[2] || cap[1])))
+        append(this.renderer.strong(this.output(cap[4] || cap[3] || cap[2] || cap[1])))
       }
 
       // em
       else if (cap = this.rules.em.exec(src)) {
         src = src.substring(cap[0].length)
-        out.push(this.renderer.em(this.output(cap[6] || cap[5] || cap[4] || cap[3] || cap[2] || cap[1])))
+        append(this.renderer.em(this.output(cap[6] || cap[5] || cap[4] || cap[3] || cap[2] || cap[1])))
       }
 
       // code
       else if (cap = this.rules.code.exec(src)) {
         src = src.substring(cap[0].length)
-        out.push(this.renderer.codespan(escape(cap[2].trim(), true)))
+        append(this.renderer.codespan(escape(cap[2].trim(), true)))
       }
 
       // br
       else if (cap = this.rules.br.exec(src)) {
         src = src.substring(cap[0].length)
-        out.push(this.renderer.br())
+        append(this.renderer.br())
       }
 
       // del (gfm)
       else if (cap = this.rules.del.exec(src)) {
         src = src.substring(cap[0].length)
-        out.push(this.renderer.del(this.output(cap[1])))
+        append(this.renderer.del(this.output(cap[1])))
       }
 
       // autolink
@@ -169,7 +173,7 @@ export default class InlineLexer {
           text = escape(cap[1])
           href = text
         }
-        out.push(this.renderer.link(href, null, text))
+        append(this.renderer.link(href, null, text))
       }
 
       // url (gfm)
@@ -191,16 +195,16 @@ export default class InlineLexer {
           }
         }
         src = src.substring(cap[0].length)
-        out.push(this.renderer.link(href, null, text))
+        append(this.renderer.link(href, null, text))
       }
 
       // text
       else if (cap = this.rules.text.exec(src)) {
         src = src.substring(cap[0].length)
         if (this.inRawBlock) {
-          out.push(this.renderer.text(cap[0]))
+          append(this.renderer.text(cap[0]))
         } else {
-          out.push(this.renderer.text(escape(this.smartypants(cap[0]))))
+          append(this.renderer.text(this.smartypants(cap[0])))
         }
       }
 
@@ -212,20 +216,19 @@ export default class InlineLexer {
     return out
   }
 
-  static escapes (text) {
-    return text ? text.replace(InlineLexer.rules._escapes, '$1') : text
-  }
-
   /**
    * Compile Link
    */
   outputLink (cap, link) {
-    const href = link.href,
-      title = link.title ? escape(link.title) : null
-
-    return cap[0].charAt(0) !== '!'
-      ? this.renderer.link(href, title, this.output(cap[1]))
-      : this.renderer.image(href, title, escape(cap[1]))
+    // @Incomplete: these should have a link prefix renderers registered
+    // eg {'': link () { ... }, '!': image () { ... }, etc. }
+    let prefix = cap[1] || ''
+    // return cap[0].charAt(0) !== '!'
+    //   ? this.renderer.link(link.href, link.title, this.output(cap[2]))
+    //   : this.renderer.image(link.href, link.title, cap[2])
+    // wtf is this.output getting called?!?!
+    // return this.renderer.link[prefix](link.href, link.title, this.output(cap[2]))
+    return this.renderer.link[prefix](link.href, link.title, cap[2])
   }
 
   /**
