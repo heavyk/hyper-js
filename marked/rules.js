@@ -54,12 +54,12 @@ block.list = edit(block.list)
   .replace('def', '\\n+(?=' + block.def.source + ')')
   .getRegex()
 
-block._tag = 'address|article|aside|base|basefont|blockquote|body|caption'
-  + '|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption'
-  + '|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe'
-  + '|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option'
-  + '|p|param|section|source|summary|table|tbody|td|tfoot|th|thead|title|tr'
-  + '|track|ul'
+// block._tag = 'address|article|aside|base|basefont|blockquote|body|caption'
+//   + '|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption'
+//   + '|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe'
+//   + '|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option'
+//   + '|p|param|section|source|summary|table|tbody|td|tfoot|th|thead|title|tr'
+//   + '|track|ul'
 block._comment = /<!--(?!-?>)[\s\S]*?-->/
 // block.html = edit(block.html, 'i')
 //   .replace('comment', block._comment)
@@ -74,8 +74,8 @@ block.paragraph = edit(block._paragraph)
   .replace('blockquote', ' {0,3}>')
   .replace('fences', ' {0,3}(?:`{3,}|~{3,})[^`\\n]*\\n')
   .replace('list', ' {0,3}(?:[*+-]|1[.)]) ') // only lists starting from 1 can interrupt
-  .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|!--)')
-  .replace('tag', block._tag) // pars can be interrupted by type (6) html blocks
+  // .replace('html', '</?(?:tag)(?: +|\\n|/?>)|<(?:script|pre|style|!--)')
+  // .replace('tag', block._tag) // pars can be interrupted by type (6) html blocks
   .getRegex()
 
 block.blockquote = edit(block.blockquote)
