@@ -171,3 +171,8 @@ export function findClosingBracket (str, b) {
   }
   return -1
 }
+
+// function to unescape text such as: \[notalink\]\(neither this\) -> [notalink](neither this)
+export function unescapes (text) {
+  return text ? text.replace(/\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/g, '$1') : text
+}

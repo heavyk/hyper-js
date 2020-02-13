@@ -1,6 +1,6 @@
 import { defaults } from './defaults.js'
 import { block } from './rules.js'
-import { rtrim } from './helpers.js'
+import { rtrim, unescapes } from './helpers.js'
 
 function splitCells (tableRow, count) {
   // ensure that every cell-delimiting pipe has a space
@@ -43,7 +43,6 @@ export default class Lexer {
     this.tokens = []
     this.tokens.links = Object.create(null)
     this.options = options || defaults
-    this.rules = block
   }
 
   static lex (src, options) {
@@ -79,7 +78,7 @@ export default class Lexer {
 
     while (src) {
       // newline
-      if (cap = this.rules.newline.exec(src)) {
+      if (cap = block.newline.exec(src)) {
         src = src.substring(cap[0].length)
         if (cap[0].length > 1) {
           this.tokens.push({
@@ -89,7 +88,7 @@ export default class Lexer {
       }
 
       // code
-      if (cap = this.rules.code.exec(src)) {
+      if (cap = block.code.exec(src)) {
         const lastToken = this.tokens[this.tokens.length - 1]
         src = src.substring(cap[0].length)
         // An indented code block cannot interrupt a paragraph.
@@ -109,7 +108,7 @@ export default class Lexer {
       }
 
       // fences
-      if (cap = this.rules.fences.exec(src)) {
+      if (cap = block.fences.exec(src)) {
         src = src.substring(cap[0].length)
         this.tokens.push({
           type: 'code',
@@ -120,7 +119,7 @@ export default class Lexer {
       }
 
       // heading
-      if (cap = this.rules.heading.exec(src)) {
+      if (cap = block.heading.exec(src)) {
         src = src.substring(cap[0].length)
         this.tokens.push({
           type: 'heading',
@@ -131,7 +130,7 @@ export default class Lexer {
       }
 
       // table no leading pipe (gfm)
-      if (cap = this.rules.nptable.exec(src)) {
+      if (cap = block.nptable.exec(src)) {
         item = {
           type: 'table',
           header: splitCells(cap[1].replace(/^ *| *\| *$/g, '')),
@@ -165,7 +164,7 @@ export default class Lexer {
       }
 
       // hr
-      if (cap = this.rules.hr.exec(src)) {
+      if (cap = block.hr.exec(src)) {
         src = src.substring(cap[0].length)
         this.tokens.push({
           type: 'hr'
@@ -174,7 +173,7 @@ export default class Lexer {
       }
 
       // blockquote
-      if (cap = this.rules.blockquote.exec(src)) {
+      if (cap = block.blockquote.exec(src)) {
         src = src.substring(cap[0].length)
 
         this.tokens.push({
@@ -196,10 +195,20 @@ export default class Lexer {
       }
 
       // link
-      // if (cap = this.rules.)
+      if (cap = block.link.exec(src)) {
+        src = src.substring(cap[0].length)
+        this.tokens.push({
+          type: 'link',
+          prefix: cap[1] || '',
+          text: cap[2],
+          href: unescapes(cap[3].trim()),
+          title: unescapes(cap[4] && cap[4].slice(1, -1))
+        })
+        continue
+      }
 
       // list
-      if (cap = this.rules.list.exec(src)) {
+      if (cap = block.list.exec(src)) {
         src = src.substring(cap[0].length)
         bull = cap[2]
         isordered = bull.length > 1
@@ -214,7 +223,7 @@ export default class Lexer {
         this.tokens.push(listStart)
 
         // Get each top-level item.
-        cap = cap[0].match(this.rules.item)
+        cap = cap[0].match(block.item)
 
         listItems = []
         next = false
@@ -304,7 +313,7 @@ export default class Lexer {
       }
 
       // def
-      if (top && (cap = this.rules.def.exec(src))) {
+      if (top && (cap = block.def.exec(src))) {
         src = src.substring(cap[0].length)
         if (cap[3]) cap[3] = cap[3].substring(1, cap[3].length - 1)
         tag = cap[1].toLowerCase().replace(/\s+/g, ' ')
@@ -318,7 +327,7 @@ export default class Lexer {
       }
 
       // table (gfm)
-      if (cap = this.rules.table.exec(src)) {
+      if (cap = block.table.exec(src)) {
         item = {
           type: 'table',
           header: splitCells(cap[1].replace(/^ *| *\| *$/g, '')),
@@ -354,7 +363,7 @@ export default class Lexer {
       }
 
       // lheading
-      if (cap = this.rules.lheading.exec(src)) {
+      if (cap = block.lheading.exec(src)) {
         src = src.substring(cap[0].length)
         this.tokens.push({
           type: 'heading',
@@ -365,7 +374,7 @@ export default class Lexer {
       }
 
       // top-level paragraph
-      if (top && (cap = this.rules.paragraph.exec(src))) {
+      if (top && (cap = block.paragraph.exec(src))) {
         src = src.substring(cap[0].length)
         this.tokens.push({
           type: 'paragraph',
@@ -377,7 +386,7 @@ export default class Lexer {
       }
 
       // text
-      if (cap = this.rules.text.exec(src)) {
+      if (cap = block.text.exec(src)) {
         // Top-level should never reach here.
         src = src.substring(cap[0].length)
         this.tokens.push({

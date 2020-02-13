@@ -81,7 +81,8 @@ export default class Parser {
    */
   tok () {
     let body
-    switch (this.token.type) {
+    let token = this.token
+    switch (token.type) {
       case 'space': {
         return ''
       }
@@ -90,16 +91,19 @@ export default class Parser {
       }
       case 'heading': {
         return this.renderer.heading(
-          this.inline.output(this.token.text),
-          this.token.depth,
-          this.inlineText.output(this.token.text),
+          this.inline.output(token.text),
+          token.depth,
+          this.inlineText.output(token.text),
           this.slugger
         )
       }
       case 'code': {
-        return this.renderer.code(this.token.text,
-          this.token.lang,
-          this.token.escaped)
+        return this.renderer.code(token.text,
+          token.lang,
+          token.escaped)
+      }
+      case 'link': {
+        return this.renderer.link[token.prefix](token.href, token.title, token.text)
       }
       case 'table': {
         let header = []
@@ -108,23 +112,23 @@ export default class Parser {
 
         // header
         cell = []
-        for (i = 0; i < this.token.header.length; i++) {
+        for (i = 0; i < token.header.length; i++) {
           cell.push(this.renderer.tablecell(
-            this.inline.output(this.token.header[i]),
-            { header: true, align: this.token.align[i]}
+            this.inline.output(token.header[i]),
+            { header: true, align: token.align[i]}
           ))
         }
 
         header.push(this.renderer.tablerow(cell))
-        for (i = 0; i < this.token.cells.length; i++) {
-          row = this.token.cells[i]
+        for (i = 0; i < token.cells.length; i++) {
+          row = token.cells[i]
 
           cell = ''
           for (j = 0; j < row.length; j++) {
             cell.push(
               this.renderer.tablecell(
                 this.inline.output(row[j]),
-                { header: false, align: this.token.align[j]}
+                { header: false, align: token.align[j]}
               )
             )
           }
@@ -145,8 +149,8 @@ export default class Parser {
       }
       case 'list_start': {
         body = []
-        const ordered = this.token.ordered,
-          start = this.token.start
+        const ordered = token.ordered,
+          start = token.start
 
         while (this.next().type !== 'list_end') {
           body.push(this.tok())
@@ -156,17 +160,17 @@ export default class Parser {
       }
       case 'list_item_start': {
         body = []
-        const loose = this.token.loose
-        const checked = this.token.checked
-        const task = this.token.task
+        const loose = token.loose
+        const checked = token.checked
+        const task = token.task
 
-        if (this.token.task) {
+        if (token.task) {
           if (loose) {
             if (this.peek().type === 'text') {
               const nextToken = this.peek()
               nextToken.text = this.renderer.checkbox(checked) + ' ' + nextToken.text
             } else {
-              this.tokens.push({
+              tokens.push({
                 type: 'text',
                 text: this.renderer.checkbox(checked)
               })
@@ -176,8 +180,8 @@ export default class Parser {
           }
         }
 
-        while (this.next().type !== 'list_item_end') {
-          body.push(!loose && this.token.type === 'text'
+        while ((token = this.next()).type !== 'list_item_end') {
+          body.push(!loose && token.type === 'text'
             ? this.parseText()
             : this.tok()
           )
@@ -186,16 +190,16 @@ export default class Parser {
       }
       case 'html': {
         // TODO parse inline content if parameter markdown=1
-        return this.renderer.html(this.token.text)
+        return this.renderer.html(token.text)
       }
       case 'paragraph': {
-        return this.renderer.paragraph(this.inline.output(this.token.text))
+        return this.renderer.paragraph(this.inline.output(token.text))
       }
       case 'text': {
         return this.renderer.paragraph(this.parseText())
       }
       default: {
-        error('Token with "' + this.token.type + '" type was not found.')
+        error('Token with "' + token.type + '" type was not found.')
       }
     }
   }

@@ -116,8 +116,6 @@ export const inline = {
 inline._punctuation = '!"#$%&\'()*+,\\-./:;<=>?@\\[^_{|}~'
 inline.em = edit(inline.em).replace(/punctuation/g, inline._punctuation).getRegex()
 
-inline._escapes = /\\([!"#$%&'()*+,\-./:;<=>?@\[\]\\^_`{|}~])/g
-
 inline._scheme = /[a-zA-Z][a-zA-Z0-9+.-]{1,31}/
 inline._email = /[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+(@)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+(?![-_])/
 inline.autolink = edit(inline.autolink)
@@ -136,6 +134,7 @@ inline._label = /(?:\[[^\[\]]*\]|\\.|`[^`]*`|[^\[\]\\`])*?/
 inline._href = /<(?:\\[<>]?|[^\s<>\\])*>|[^\s\x00-\x1f]*/
 inline._title = /"(?:\\"?|[^"\\])*"|'(?:\\'?|[^'\\])*'|\((?:\\\)?|[^)\\])*\)/
 
+block.link =
 inline.link = edit(inline.link)
   .replace('label', inline._label)
   .replace('href', inline._href)

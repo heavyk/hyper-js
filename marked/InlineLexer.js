@@ -1,17 +1,13 @@
 import Renderer from './Renderer.js'
 import { defaults } from './defaults.js'
 import { inline } from './rules.js'
-import { findClosingBracket } from './helpers.js'
+import { findClosingBracket, unescapes } from './helpers.js'
 
 import { error } from '@hyper/utils'
 import { h } from '@hyper/dom/hyper-hermes'
 
-// function to unescape text such as: \[notalink\]\(neither this\) -> [notalink](neither this)
-function unescapes (text) {
-  return text ? text.replace(inline._escapes, '$1') : text
-}
-
 let tags = 'kbd|pre|code'.split('|')
+let rules = inline.breaks
 
 /**
  * Inline Lexer & Compiler
@@ -20,7 +16,6 @@ export default class InlineLexer {
   constructor (links, options) {
     this.options = options || defaults
     this.links = links
-    this.rules = inline.normal
     this.options.renderer = this.options.renderer || new Renderer()
     this.renderer = this.options.renderer
     this.renderer.options = this.options
@@ -28,8 +23,6 @@ export default class InlineLexer {
     if (!this.links) {
       error('Tokens array requires a `links` property.')
     }
-
-    this.rules = inline.breaks
   }
 
   /**
@@ -70,13 +63,13 @@ export default class InlineLexer {
       // if (DEBUG && src.startsWith('<!--')) debugger
 
       // escape
-      if (cap = this.rules.escape.exec(src)) {
+      if (cap = rules.escape.exec(src)) {
         src = src.substring(cap[0].length)
         append(cap[1])
       }
 
       // tag
-      else if ((cap = this.rules.tag.exec(src))) {
+      else if ((cap = rules.tag.exec(src))) {
         // cap[1] - closing tag
         // cap[2] - opening tag
         src = src.substring(cap[0].length)
@@ -101,24 +94,12 @@ export default class InlineLexer {
             debugger
           }
         }
-        // if (cap[1]) append(this.renderer.el(cap[1], cap[2]))
-        // if (cap[1]) debugger
       }
 
       // link
-      else if (cap = this.rules.link.exec(src)) {
-        const lastParenIndex = findClosingBracket(cap[3], '()')
-        if (lastParenIndex > -1) {
-          // I don't understand when this case is hit. I can't seem to get it to go
-          debugger
-          const linkLen = (cap[1] ? 5 : 4) + cap[2].length + lastParenIndex
-          cap[3] = cap[3].substring(0, lastParenIndex)
-          cap[0] = cap[0].substring(0, linkLen).trim()
-          cap[4] = ''
-        }
-
+      else if (cap = rules.link.exec(src)) {
         src = src.substring(cap[0].length)
-        href = cap[3].trim().replace(/^<([\s\S]*)>$/, '$1')
+        href = cap[3].trim()
         append(this.outputLink(cap, {
           href: unescapes(href),
           title: unescapes(cap[4] && cap[4].slice(1, -1))
@@ -126,8 +107,8 @@ export default class InlineLexer {
       }
 
       // reflink, nolink
-      else if ((cap = this.rules.reflink.exec(src))
-        || (cap = this.rules.nolink.exec(src))) {
+      else if ((cap = rules.reflink.exec(src))
+        || (cap = rules.nolink.exec(src))) {
         src = src.substring(cap[0].length)
         link = (cap[3] || cap[2]).replace(/\s+/g, ' ')
         link = this.links[link.toLowerCase()]
@@ -144,37 +125,37 @@ export default class InlineLexer {
       }
 
       // strong
-      else if (cap = this.rules.strong.exec(src)) {
+      else if (cap = rules.strong.exec(src)) {
         src = src.substring(cap[0].length)
         append(this.renderer.strong(this.output(cap[4] || cap[3] || cap[2] || cap[1])))
       }
 
       // em
-      else if (cap = this.rules.em.exec(src)) {
+      else if (cap = rules.em.exec(src)) {
         src = src.substring(cap[0].length)
         append(this.renderer.em(this.output(cap[6] || cap[5] || cap[4] || cap[3] || cap[2] || cap[1])))
       }
 
       // code
-      else if (cap = this.rules.code.exec(src)) {
+      else if (cap = rules.code.exec(src)) {
         src = src.substring(cap[0].length)
         append(this.renderer.codespan(escape(cap[2].trim(), true)))
       }
 
       // br
-      else if (cap = this.rules.br.exec(src)) {
+      else if (cap = rules.br.exec(src)) {
         src = src.substring(cap[0].length)
         append(this.renderer.br())
       }
 
       // del (gfm)
-      else if (cap = this.rules.del.exec(src)) {
+      else if (cap = rules.del.exec(src)) {
         src = src.substring(cap[0].length)
         append(this.renderer.del(this.output(cap[1])))
       }
 
       // autolink
-      else if (cap = this.rules.autolink.exec(src)) {
+      else if (cap = rules.autolink.exec(src)) {
         src = src.substring(cap[0].length)
         if (cap[2] === '@') {
           text = escape(this.mangle(cap[1]))
@@ -187,7 +168,7 @@ export default class InlineLexer {
       }
 
       // url (gfm)
-      else if (cap = this.rules.url.exec(src)) {
+      else if (cap = rules.url.exec(src)) {
         if (cap[2] === '@') {
           text = escape(cap[0])
           href = 'mailto:' + text
@@ -195,7 +176,7 @@ export default class InlineLexer {
           // do extended autolink path validation
           do {
             prevCapZero = cap[0]
-            cap[0] = this.rules._backpedal.exec(cap[0])[0]
+            cap[0] = rules._backpedal.exec(cap[0])[0]
           } while (prevCapZero !== cap[0])
           text = escape(cap[0])
           if (cap[1] === 'www.') {
@@ -209,7 +190,7 @@ export default class InlineLexer {
       }
 
       // text
-      else if (cap = this.rules.text.exec(src)) {
+      else if (cap = rules.text.exec(src)) {
         src = src.substring(cap[0].length)
         if (this.inRawBlock) {
           append(this.renderer.text(cap[0]))
