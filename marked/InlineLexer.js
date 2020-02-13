@@ -11,7 +11,7 @@ function unescapes (text) {
   return text ? text.replace(inline._escapes, '$1') : text
 }
 
-let tags = 'a|kbd|pre|code'.split('|')
+let tags = 'kbd|pre|code'.split('|')
 
 /**
  * Inline Lexer & Compiler
@@ -79,13 +79,6 @@ export default class InlineLexer {
       else if ((cap = this.rules.tag.exec(src))) {
         // cap[1] - closing tag
         // cap[2] - opening tag
-        // @Cleanup: remove this.inLink
-        if (!this.inLink && cap[2] === 'a') {
-          this.inLink = true
-        } else if (this.inLink && cap[1] === 'a') {
-          this.inLink = false
-        }
-
         src = src.substring(cap[0].length)
 
         if (tags.includes(cap[1] || cap[2])) {
@@ -102,10 +95,10 @@ export default class InlineLexer {
 
             append(cap)
             this.inRawBlock = false
-          } else {
-            in_tag = 0
+          } else if (DEBUG) {
             // this shouldn't happen. it may happen though if it's like an html comment or something...
-            if (DEBUG) debugger
+            in_tag = 0
+            debugger
           }
         }
         // if (cap[1]) append(this.renderer.el(cap[1], cap[2]))
@@ -125,13 +118,11 @@ export default class InlineLexer {
         }
 
         src = src.substring(cap[0].length)
-        this.inLink = true
         href = cap[3].trim().replace(/^<([\s\S]*)>$/, '$1')
         append(this.outputLink(cap, {
           href: unescapes(href),
           title: unescapes(cap[4] && cap[4].slice(1, -1))
         }))
-        this.inLink = false
       }
 
       // reflink, nolink
@@ -144,13 +135,11 @@ export default class InlineLexer {
           // out += cap[0].charAt(0)
           // not sure if this is right...
           append(cap[0].charAt(0))
-          if (DEBUG) debugger
+          if (DEBUG) debugger // @Incomplete: test these. not sure they're working properly
           src = cap[0].substring(1) + src
         } else {
-          if (DEBUG) debugger
-          this.inLink = true
+          if (DEBUG) debugger // @Incomplete: test these. not sure they're working properly
           append(this.outputLink(cap, link))
-          this.inLink = false
         }
       }
 
@@ -198,7 +187,7 @@ export default class InlineLexer {
       }
 
       // url (gfm)
-      else if (!this.inLink && (cap = this.rules.url.exec(src))) {
+      else if (cap = this.rules.url.exec(src)) {
         if (cap[2] === '@') {
           text = escape(cap[0])
           href = 'mailto:' + text
