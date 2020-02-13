@@ -46,6 +46,7 @@ let services = {
     //   return params
     // }, {})
     let params = parseQS(url.search)
+    delete params.v
 
     if (params.t) {
       let parts = /[0-9]+/g.exec(params.t)
@@ -56,10 +57,13 @@ let services = {
       delete params.t
     }
 
-    console.log(url, id, start, params)
-    console.log(`https://${url.host}/embed/${id}${stringifyQS(params)}`)
-    return `https://youtube${href.indexOf('nocookie') ? '-nocookie' : ''}.com/embed/${id}${stringifyQS(params)}`
+    // console.log(url, id, start, params)
+    // console.log(`https://${url.host}/embed/${id}${stringifyQS(params)}`)
+    return `https://youtube.com/embed/${id}${stringifyQS(params)}`
   },
+
+  // generic embed
+  embed: (url) => cleanUrl(url),
 
   vimeo: (url) => {
     // ...
@@ -98,20 +102,13 @@ export default function Renderer (G, options = {}) {
   link['!'] = function (src, title, text) {
     return !(src = cleanUrl(options.baseUrl, src))
       ? text
-      : h('a', {src, title, alt: text}, text)
+      : h('img', {src, title, alt: text}, text)
   }
+
   // embed service (youtube, vimeo, vine, etc.)
-  link['@'] = function (href, title, service) {
-    // let renderer = services[service] || function () {
-    //   if (DEBUG) error(`embed service '${service}' not registered`)
-    //   return h(0, `embed service '${service}' not supported`)
-    // }
-    // debugger
-    let get_url = services[service]
-    // <iframe width="560" height="315" src="https://www.youtube.com/embed/zDV_dBYp4h0?start=20" frameborder="0" allow="" allowfullscreen></iframe>
-    // debugger
+  link['@'] = function (href, title, service, get_url) {
     return h('.block-embed service-'+service,
-      get_url
+      (get_url = services[service])
         ? h('iframe', {src: get_url(href), type: 'text/html', frameBorder: 0, allow: 'accelerometer;autoplay;encrypted-media;gyroscope;picture-in-picture', allowFullscreen: 1})
         : h(0, `embed service '${service}' not supported`)
     )

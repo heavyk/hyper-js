@@ -90,7 +90,7 @@ export const inline = {
   autolink: /^<(scheme:[^\s\x00-\x1f<>]*|email)>/,
   url: noopTest,
   tag: '^comment'
-    + '|^</[a-zA-Z][\\w:-]*\\s*>' // self-closing tag
+    + '|^</([a-zA-Z][\\w:-]*)\\s*>' // self-closing tag
     + '|^<([a-zA-Z][\\w-]*)((?:attribute)*?)\\s*/?>', // open tag
     // disabled.. we definitely don't want processing instructions, declarations or cdata in markdown
     // + '|^<\\?[\\s\\S]*?\\?>' // processing instruction, e.g. <?php ?>
@@ -159,6 +159,9 @@ inline.gfm = merge({}, inline, {
   text: /^(`+|[^`])(?:[\s\S]*?(?:(?=[\\<!prefix\[`*~]|\b_|https?:\/\/|ftp:\/\/|www\.|$)|[^ ](?= {2,}\n)|[^a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-](?=[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@))|(?= {2,}\n|[a-zA-Z0-9.!#$%&'*+\/=?_`{\|}~-]+@))/
 })
 
+// @Cleanup: why is there a difference between email and extended_email? they should be merged or one deleted.
+//           extended_email is only used for the detection and auto replacement of email adderesses to make them mailto: links.
+//           IMO, this is not necessary at all.
 inline.gfm.url = edit(inline.gfm.url, 'i')
   .replace('email', inline.gfm._extended_email)
   .getRegex()
@@ -179,5 +182,3 @@ inline.breaks = merge({}, inline.gfm, {
     .replace(/\{2,\}/g, '*')
     .getRegex()
 })
-
-console.log(edit(inline.link).getRegex())

@@ -11,6 +11,8 @@ function unescapes (text) {
   return text ? text.replace(inline._escapes, '$1') : text
 }
 
+let tags = 'a|kbd|pre|code'.split('|')
+
 /**
  * Inline Lexer & Compiler
  */
@@ -44,6 +46,7 @@ export default class InlineLexer {
   output (src) {
     let out = [],
       last,
+      in_tag,
       link,
       text,
       href,
@@ -55,11 +58,17 @@ export default class InlineLexer {
         // append
         last = (out[out.length - 1] += it)
       } else {
-        out.push(last = it)
+        if (in_tag) {
+          in_tag.aC(it)
+        } else {
+          out.push(last = it)
+        }
       }
     }
 
     while (src) {
+      // if (DEBUG && src.startsWith('<!--')) debugger
+
       // escape
       if (cap = this.rules.escape.exec(src)) {
         src = src.substring(cap[0].length)
@@ -67,29 +76,40 @@ export default class InlineLexer {
       }
 
       // tag
-      else if (cap = this.rules.tag.exec(src)) {
-        if (!this.inLink && /^<a /i.test(cap[0])) {
+      else if ((cap = this.rules.tag.exec(src))) {
+        // cap[1] - closing tag
+        // cap[2] - opening tag
+        // @Cleanup: remove this.inLink
+        if (!this.inLink && cap[2] === 'a') {
           this.inLink = true
-        } else if (this.inLink && /^<\/a>/i.test(cap[0])) {
+        } else if (this.inLink && cap[1] === 'a') {
           this.inLink = false
-        }
-        // raw block means that text is output exactly as it's written and isn't transformed by markdown
-        if (!this.inRawBlock && /^<(pre|code|kbd|script)(\s|>)/i.test(cap[0])) {
-          this.inRawBlock = true
-        } else if (this.inRawBlock && /^<\/(pre|code|kbd|script)(\s|>)/i.test(cap[0])) {
-          this.inRawBlock = false
         }
 
         src = src.substring(cap[0].length)
-        // out += cap[0]
-        // not sure how to do this one...
-        if (cap[1]) {
-          let el = h(0, {html: cap[0]})
-          debugger
-          append(el.firstChild)
+
+        if (tags.includes(cap[1] || cap[2])) {
+          if (cap[2]) {
+            // entering tag
+            in_tag = h(cap[2])
+
+            // raw block means that text is output exactly as it's written and isn't transformed by markdown
+            this.inRawBlock = true
+          } else if (cap[1]) {
+            // leaving tag
+            cap = in_tag
+            in_tag = 0
+
+            append(cap)
+            this.inRawBlock = false
+          } else {
+            in_tag = 0
+            // this shouldn't happen. it may happen though if it's like an html comment or something...
+            if (DEBUG) debugger
+          }
         }
         // if (cap[1]) append(this.renderer.el(cap[1], cap[2]))
-        if (cap[1]) debugger
+        // if (cap[1]) debugger
       }
 
       // link
@@ -124,9 +144,10 @@ export default class InlineLexer {
           // out += cap[0].charAt(0)
           // not sure if this is right...
           append(cap[0].charAt(0))
-          debugger
+          if (DEBUG) debugger
           src = cap[0].substring(1) + src
         } else {
+          if (DEBUG) debugger
           this.inLink = true
           append(this.outputLink(cap, link))
           this.inLink = false
