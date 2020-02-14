@@ -465,9 +465,7 @@ export function make_obv_node (e, v, cleanupFuncs = []) {
 
         e.iB(nn, placeholder)
         r = Array.isArray(val) ? val : nn
-      }), () => {
-        e.rC(placeholder)
-      })
+      }), () => (placeholder.rm(), r && Array.isArray(r) ? each(r, r => r.rm()) : r.rm()))
     } else {
       // normal function
       o = make_node(e, v, cleanupFuncs)
