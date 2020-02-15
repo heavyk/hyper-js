@@ -93,16 +93,26 @@ export function set_style (e, style, cleanupFuncs = []) {
   }
 }
 
+// by default, for performeance reasons, only passive events are used.
+// if preventDefault is called, chrome will spit out an error.
+// if you want non-passive, simply pass your own opts: eg.
+//   on(emitter, 'click', ..., { passive: false, capture: true })
+//             -kenny 14-01-2020
+let event_opts = (opts) =>
+  opts === true ? { passive: true, capture: true }
+  : opts === false ? { passive: true }
+  : opts
 
 // event stuff
 // @Cleanup: replace all instances of 'addEventListener' with this function (to save a few bytes)
 export function on (emitter, event, listener, opts = false) {
-  (emitter.on || emitter.addEventListener).call(emitter, event, listener, opts)
+  if (DEBUG && emitter.tagName === 'A' && (typeof opts === 'boolean' || opts.passive)) error('you are trying to listen to an event on an element which will perform page navigation. pass `{passive: false}` if you want to change the default behaviour of the anchor element')
+  (emitter.on || emitter.addEventListener).call(emitter, event, listener, event_opts(opts))
 }
 
 // @Cleanup: replace all instances of 'removeEventListener' with this function (to save a few bytes)
 export function off (emitter, event, listener, opts = false) {
-  (emitter.off || emitter.removeEventListener).call(emitter, event, listener, opts)
+  (emitter.off || emitter.removeEventListener).call(emitter, event, listener, event_opts(opts))
 }
 
 // dispatch an event

@@ -2,26 +2,18 @@
 import { is_obv, ensure_obv, bind2 } from '@hyper/dom/observable'
 import { on, off, dispatch_event, prevent_default } from '@hyper/dom/dom-base'
 
-const PASSIVE_AND_CAPTURE = { passive: true, capture: true }
-const PASSIVE = { passive: true }
 
+// listen to any event, reading `attr` and calling `listener` with the value.
+// `attr` can also be a function which can be used to transform the value passed to listener.
 export function listen (element, event, attr, listener, do_immediately, opts) {
-  // by default, for performeance reasons, passive events are used.
-  // if preventDefault is called, chrome will spit out an error.
-  // the solution is to simply pass your own opts:
-  // eg. listen(..., { passive: false, capture: true })
-  //             -kenny 14-01-2020
-
-  opts = opts === true ? PASSIVE_AND_CAPTURE
-    : opts === false ? CAPTURE : opts
-
-  let on_event = (e) => { listener(typeof attr === 'function' ? attr() : attr ? element[attr] : e) }
+  let on_event = (e) => { listener(typeof attr === 'function' ? attr(e) : attr ? element[attr] : e) }
   on(element, event, on_event, opts)
   do_immediately && attr && on_event()
   return () => off(element, event, on_event, opts)
 }
 
-// observe any event, reading any attribute
+// observe any event, reading any attribute.
+// returns an observable.
 export function obv_event (element, attr = 'value', event = 'keyup', event_filter, listener) {
   event_filter = typeof event_filter === 'function' ? event_filter
     : ((e) => e.which === 13 && !e.shiftKey)
@@ -113,14 +105,6 @@ export function toggle (el, up_event, down_event) {
   }
 }
 
-// TODO: maybe implement?
-// it would be cool to be able to set these programatically. it's possible too.
-// it's a little complicated though (see simulant).
-// it could be useful for indicating to the user where they should bo looking next.
-
-
-// call like this `add_event.call(cleanupFuncs, el, listener, opts)`
-// furthermore, it may be wise to make the `cleanupFuncs = this` for all these type of functions
 export function add_event (cleanupFuncs, e, event, listener, opts) {
   on(e, event, listener, opts)
   cleanupFuncs.push(() => { off(e, event, listener, opts) })
@@ -129,6 +113,17 @@ export function add_event (cleanupFuncs, e, event, listener, opts) {
 // https://www.html5rocks.com/en/mobile/touchandmouse/
 // https://www.html5rocks.com/en/mobile/touch/
 // look into `passive: true` as a replacement for the `preventDefault` functionality.
+// it turns out that if the event listener is passive, then it's unable to prevent the
+// default functionality -- which, if the element is an anchor 'a' element, then the
+// default functionality is to navigate to another page, and that cannot be prevented
+// with a passive handler, ever.
+//
+// so, the solution is to use a different element than 'a' (I have begun to use 'b')
+// and passively do the click handler on there and process the click events with
+// a custom click/touchstart handler which is capable of handling the clicks, but
+// also allowing for navigation away from the page.
+//
+//      -kenny (2020-02-14)
 export function boink (cleanupFuncs, el, obv, opts) {
   // passing attr=0 here to tell it to not grab the value of any attribute on the el.
   cleanupFuncs.push(
