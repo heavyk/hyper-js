@@ -19,7 +19,7 @@ export default class RenderingArray extends ObservableArray {
     self.fn = typeof data === 'function' ? (fn = data) : fn
     fl = self.fl = fn.length
     self.G = G
-    self.d = data instanceof ObservableArray ? data : new ObservableArray() && DEBUG && error('data must be a RenderingArray')
+    self.d = data instanceof ObservableArray ? data : new ObservableArray() && DEBUG && error('data must be a ObservableArray')
     // this should have cleanupFuncs in the context (which adds h/s cleanup to the list when it makes the context)
     G.cleanupFuncs.push(() => { self.cleanup() })
 
