@@ -1,4 +1,5 @@
-import { mergeDeep, objJSON, random_id, extend, next_tick } from '@hyper/utils'
+import { mergeDeep, objJSON, extend, next_tick } from '@hyper/utils'
+import { random_id } from '@hyper/random'
 
 import { value } from '@hyper/dom/observable'
 import obj_value from '@hyper/obv/obj_value'
