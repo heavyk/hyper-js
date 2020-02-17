@@ -142,10 +142,6 @@ export default function Renderer (G, options = {}) {
       return h('blockquote', quote)
     },
 
-    html (html) {
-      return h(0, {html})
-    },
-
     heading (text, level, raw, slugger) {
       return options.headerIds
         ? h('h'+level, {id: options.headerPrefix + slugger(h(0, raw).textContent)}, text)
@@ -160,8 +156,10 @@ export default function Renderer (G, options = {}) {
       return h(ordered ? 'ol' : 'ul', {start: ordered && start !== 1 ? start : undefined}, body)
     },
 
-    listitem (text) {
-      return h('li', text)
+    // listitem (text) {
+    listitem (body, task, checked) {
+      // console.log('listitem', task, checked)
+      return h('li', {c: task && 'task'}, body)
     },
 
     checkbox (checked) {

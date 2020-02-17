@@ -292,9 +292,7 @@ export default class Lexer {
           // Recurse.
           this.token(item, false)
 
-          this.tokens.push({
-            type: 'list_item_end'
-          })
+          this.tokens.push({ type: 'list_item_end' })
         }
 
         if (listStart.loose) {

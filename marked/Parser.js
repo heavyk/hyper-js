@@ -149,8 +149,7 @@ export default class Parser {
       }
       case 'list_start': {
         body = []
-        const ordered = token.ordered,
-          start = token.start
+        const { ordered, start } = token
 
         while (this.next().type !== 'list_end') {
           body.push(this.tok())
@@ -164,33 +163,23 @@ export default class Parser {
         const checked = token.checked
         const task = token.task
 
-        if (token.task) {
+        if (task) {
+          body.push(this.renderer.checkbox(checked))
           if (loose) {
-            if (this.peek().type === 'text') {
-              const nextToken = this.peek()
-              nextToken.text = this.renderer.checkbox(checked) + ' ' + nextToken.text
-            } else {
-              tokens.push({
-                type: 'text',
-                text: this.renderer.checkbox(checked)
-              })
+            const nextToken = this.peek()
+            if (nextToken.type === 'text') {
+              nextToken.text = ' ' + nextToken.text
             }
-          } else {
-            body.push(this.renderer.checkbox(checked))
           }
         }
 
         while ((token = this.next()).type !== 'list_item_end') {
           body.push(!loose && token.type === 'text'
-            ? this.parseText()
+            ? this.parseText() // not loose
             : this.tok()
           )
         }
         return this.renderer.listitem(body, task, checked)
-      }
-      case 'html': {
-        // TODO parse inline content if parameter markdown=1
-        return this.renderer.html(token.text)
       }
       case 'paragraph': {
         return this.renderer.paragraph(this.inline.output(token.text))
