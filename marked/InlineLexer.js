@@ -12,31 +12,18 @@ let rules = inline.breaks
 /**
  * Inline Lexer & Compiler
  */
-export default class InlineLexer {
-  constructor (links, options) {
-    this.options = options || defaults
-    this.links = links
-    this.options.renderer = this.options.renderer || new Renderer()
-    this.renderer = this.options.renderer
-    this.renderer.options = this.options
+export default function InlineLexer (G, links, options = defaults) {
+  options.renderer = options.renderer || new Renderer(G)
+  let renderer = options.renderer
+  renderer.options = options
 
-    if (!this.links) {
-      error('Tokens array requires a `links` property.')
-    }
+  let inRawBlock
+
+  if (!links) {
+    error('Tokens array requires a `links` property.')
   }
 
-  /**
-   * Static Lexing/Compiling Method
-   */
-  static output (src, links, options) {
-    const inline = new InlineLexer(links, options)
-    return inline.output(src)
-  }
-
-  /**
-   * Lexing/Compiling
-   */
-  output (src) {
+  function output (src) {
     let out = [],
       last,
       in_tag,
@@ -80,14 +67,14 @@ export default class InlineLexer {
             in_tag = h(cap[2])
 
             // raw block means that text is output exactly as it's written and isn't transformed by markdown
-            this.inRawBlock = true
+            inRawBlock = true
           } else if (cap[1]) {
             // leaving tag
             cap = in_tag
             in_tag = 0
 
             append(cap)
-            this.inRawBlock = false
+            inRawBlock = false
           } else if (DEBUG) {
             // this shouldn't happen. it may happen though if it's like an html comment or something...
             in_tag = 0
@@ -100,7 +87,7 @@ export default class InlineLexer {
       else if (cap = rules.link.exec(src)) {
         src = src.substring(cap[0].length)
         href = cap[3].trim()
-        append(this.outputLink(cap, {
+        append(outputLink(cap, {
           href: unescapes(href),
           title: unescapes(cap[4] && cap[4].slice(1, -1))
         }))
@@ -111,7 +98,7 @@ export default class InlineLexer {
         || (cap = rules.nolink.exec(src))) {
         src = src.substring(cap[0].length)
         link = (cap[3] || cap[2]).replace(/\s+/g, ' ')
-        link = this.links[link.toLowerCase()]
+        link = links[link.toLowerCase()]
         if (!link || !link.href) {
           // out += cap[0].charAt(0)
           // not sure if this is right...
@@ -120,51 +107,51 @@ export default class InlineLexer {
           src = cap[0].substring(1) + src
         } else {
           if (DEBUG) debugger // @Incomplete: test these. not sure they're working properly
-          append(this.outputLink(cap, link))
+          append(outputLink(cap, link))
         }
       }
 
       // strong
       else if (cap = rules.strong.exec(src)) {
         src = src.substring(cap[0].length)
-        append(this.renderer.strong(this.output(cap[4] || cap[3] || cap[2] || cap[1])))
+        append(renderer.strong(output(cap[4] || cap[3] || cap[2] || cap[1])))
       }
 
       // em
       else if (cap = rules.em.exec(src)) {
         src = src.substring(cap[0].length)
-        append(this.renderer.em(this.output(cap[6] || cap[5] || cap[4] || cap[3] || cap[2] || cap[1])))
+        append(renderer.em(output(cap[6] || cap[5] || cap[4] || cap[3] || cap[2] || cap[1])))
       }
 
       // code
       else if (cap = rules.code.exec(src)) {
         src = src.substring(cap[0].length)
-        append(this.renderer.codespan(escape(cap[2].trim(), true)))
+        append(renderer.codespan(escape(cap[2].trim(), true)))
       }
 
       // br
       else if (cap = rules.br.exec(src)) {
         src = src.substring(cap[0].length)
-        append(this.renderer.br())
+        append(renderer.br())
       }
 
       // del (gfm)
       else if (cap = rules.del.exec(src)) {
         src = src.substring(cap[0].length)
-        append(this.renderer.del(this.output(cap[1])))
+        append(renderer.del(output(cap[1])))
       }
 
       // autolink
       else if (cap = rules.autolink.exec(src)) {
         src = src.substring(cap[0].length)
         if (cap[2] === '@') {
-          text = escape(this.mangle(cap[1]))
+          text = escape(mangle(cap[1]))
           href = 'mailto:' + text
         } else {
           text = escape(cap[1])
           href = text
         }
-        append(this.renderer.link(href, null, text))
+        append(renderer.link(href, null, text))
       }
 
       // url (gfm)
@@ -186,16 +173,16 @@ export default class InlineLexer {
           }
         }
         src = src.substring(cap[0].length)
-        append(this.renderer.link(href, null, text))
+        append(renderer.link(href, null, text))
       }
 
       // text
       else if (cap = rules.text.exec(src)) {
         src = src.substring(cap[0].length)
-        if (this.inRawBlock) {
-          append(this.renderer.text(cap[0]))
+        if (inRawBlock) {
+          append(renderer.text(cap[0]))
         } else {
-          append(this.renderer.text(this.smartypants(cap[0])))
+          append(renderer.text(smartypants(cap[0])))
         }
       }
 
@@ -210,23 +197,23 @@ export default class InlineLexer {
   /**
    * Compile Link
    */
-  outputLink (cap, link) {
+  function outputLink (cap, link) {
     // @Incomplete: these should have a link prefix renderers registered
     // eg {'': link () { ... }, '!': image () { ... }, etc. }
     let prefix = cap[1] || ''
     // return cap[0].charAt(0) !== '!'
-    //   ? this.renderer.link(link.href, link.title, this.output(cap[2]))
-    //   : this.renderer.image(link.href, link.title, cap[2])
-    // wtf is this.output getting called?!?!
-    // return this.renderer.link[prefix](link.href, link.title, this.output(cap[2]))
-    return this.renderer.link[prefix](link.href, link.title, cap[2])
+    //   ? renderer.link(link.href, link.title, output(cap[2]))
+    //   : renderer.image(link.href, link.title, cap[2])
+    // wtf is output getting called?!?!
+    // return renderer.link[prefix](link.href, link.title, output(cap[2]))
+    return renderer.link[prefix](link.href, link.title, cap[2])
   }
 
   /**
    * Smartypants Transformations
    */
-  smartypants (text) {
-    if (!this.options.smartypants) return text
+  function smartypants (text) {
+    if (!options.smartypants) return text
     return text
       // em-dashes
       .replace(/---/g, '\u2014')
@@ -247,14 +234,13 @@ export default class InlineLexer {
   /**
    * Mangle Links
    */
-  mangle (text) {
-    if (!this.options.mangle) return text
-    const l = text.length
+  function mangle (text) {
+    if (!options.mangle) return text
     let out = '',
       i = 0,
       ch
 
-    for (; i < l; i++) {
+    for (; i < text.length; i++) {
       ch = text.charCodeAt(i)
       if (Math.random() > 0.5) {
         ch = 'x' + ch.toString(16)
@@ -264,4 +250,6 @@ export default class InlineLexer {
 
     return out
   }
+
+  return output
 }

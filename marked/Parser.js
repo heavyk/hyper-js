@@ -7,103 +7,75 @@ import { unescape } from './helpers.js'
 
 import { merge, error } from '@hyper/utils'
 
-/**
- * Parsing & Compiling
- */
-export default class Parser {
-  constructor (G, options) {
-    this.tokens = []
-    this.token = null
-    this.options = options || defaults
-    this.options.renderer = this.options.renderer || Renderer(G)
-    this.renderer = this.options.renderer
-    this.renderer.options = this.options
-    this.slugger = Slugger()
-  }
+export default function Parser (G, options = defaults) {
+  let tokens = []
+  let token = null
+  let renderer = options.renderer || Renderer(G)
+  renderer.options = options
+  let slugger = Slugger()
+  let inline_output
+  let inline_text_output
 
-  /**
-   * Static Parse Method
-   */
-  static parse (G, tokens, options) {
-    return new Parser(G, options).parse(tokens)
-  }
-
-  /**
-   * Parse Loop
-   */
-  parse (tokens) {
-    this.inline = new InlineLexer(tokens.links, this.options)
+  function parse (tokens) {
+    inline_output = InlineLexer(tokens.links, options)
     // use an InlineLexer with a TextRenderer to extract pure text
-    this.inlineText = new InlineLexer(
+    inline_text_output = InlineLexer(
       tokens.links,
-      merge({}, this.options, { renderer: new TextRenderer() })
+      merge({}, options, { renderer: new TextRenderer() })
     )
-    this.tokens = tokens.reverse()
+    tokens = tokens.reverse()
 
     let out = []
-    while (this.next()) {
-      out.push(this.tok())
+    while (next()) {
+      out.push(tok())
     }
 
     return out
   }
 
-  /**
-   * Next Token
-   */
-  next () {
-    this.token = this.tokens.pop()
-    return this.token
+  function next () {
+    return token = tokens.pop()
   }
 
-  /**
-   * Preview Next Token
-   */
-  peek () {
-    return this.tokens[this.tokens.length - 1] || 0
+  function peek () {
+    return tokens[tokens.length - 1] || 0
   }
 
-  /**
-   * Parse Text Tokens
-   */
-  parseText () {
-    let body = this.token.text
+  function parseText () {
+    let body = token.text
 
-    while (this.peek().type === 'text') {
-      body += '\n' + this.next().text
+    while (peek().type === 'text') {
+      body += '\n' + next().text
     }
 
-    return this.inline.output(body)
+    return inline_output(body)
   }
 
-  /**
-   * Parse Current Token
-   */
-  tok () {
+  function tok () {
     let body
-    let token = this.token
+    let token = token
     switch (token.type) {
       case 'space': {
         return ''
       }
       case 'hr': {
-        return this.renderer.hr()
+        return renderer.hr()
       }
       case 'heading': {
-        return this.renderer.heading(
-          this.inline.output(token.text),
+        return renderer.heading(
+          inline_output(token.text),
           token.depth,
-          this.inlineText.output(token.text),
-          this.slugger
+          inline_text_output(token.text),
+          slugger
         )
       }
       case 'code': {
-        return this.renderer.code(token.text,
+        return renderer.code(token.text,
           token.lang,
           token.escaped)
       }
       case 'link': {
-        return this.renderer.link[token.prefix](token.href, token.title, token.text)
+        return renderer.link[token.prefix](token.href, token.title, token.text)
       }
       case 'table': {
         let header = []
@@ -113,49 +85,49 @@ export default class Parser {
         // header
         cell = []
         for (i = 0; i < token.header.length; i++) {
-          cell.push(this.renderer.tablecell(
-            this.inline.output(token.header[i]),
+          cell.push(renderer.tablecell(
+            inline_output(token.header[i]),
             { header: true, align: token.align[i]}
           ))
         }
 
-        header.push(this.renderer.tablerow(cell))
+        header.push(renderer.tablerow(cell))
         for (i = 0; i < token.cells.length; i++) {
           row = token.cells[i]
 
           cell = ''
           for (j = 0; j < row.length; j++) {
             cell.push(
-              this.renderer.tablecell(
-                this.inline.output(row[j]),
+              renderer.tablecell(
+                inline_output(row[j]),
                 { header: false, align: token.align[j]}
               )
             )
           }
 
-          cells.push(this.renderer.tablerow(cell))
+          cells.push(renderer.tablerow(cell))
         }
 
-        return this.renderer.table(header, cells)
+        return renderer.table(header, cells)
       }
       case 'blockquote_start': {
         body = []
 
-        while (this.next().type !== 'blockquote_end') {
-          body.push(this.tok())
+        while (next().type !== 'blockquote_end') {
+          body.push(tok())
         }
 
-        return this.renderer.blockquote(body)
+        return renderer.blockquote(body)
       }
       case 'list_start': {
         body = []
         const { ordered, start } = token
 
-        while (this.next().type !== 'list_end') {
-          body.push(this.tok())
+        while (next().type !== 'list_end') {
+          body.push(tok())
         }
 
-        return this.renderer.list(body, ordered, start)
+        return renderer.list(body, ordered, start)
       }
       case 'list_item_start': {
         body = []
@@ -164,32 +136,34 @@ export default class Parser {
         const task = token.task
 
         if (task) {
-          body.push(this.renderer.checkbox(checked))
+          body.push(renderer.checkbox(checked))
           if (loose) {
-            const nextToken = this.peek()
+            const nextToken = peek()
             if (nextToken.type === 'text') {
               nextToken.text = ' ' + nextToken.text
             }
           }
         }
 
-        while ((token = this.next()).type !== 'list_item_end') {
+        while ((token = next()).type !== 'list_item_end') {
           body.push(!loose && token.type === 'text'
-            ? this.parseText() // not loose
-            : this.tok()
+            ? parseText() // not loose
+            : tok()
           )
         }
-        return this.renderer.listitem(body, task, checked)
+        return renderer.listitem(body, task, checked)
       }
       case 'paragraph': {
-        return this.renderer.paragraph(this.inline.output(token.text))
+        return renderer.paragraph(inline_output(token.text))
       }
       case 'text': {
-        return this.renderer.paragraph(this.parseText())
+        return renderer.paragraph(parseText())
       }
       default: {
         error('Token with "' + token.type + '" type was not found.')
       }
     }
   }
+
+  return parse
 }
