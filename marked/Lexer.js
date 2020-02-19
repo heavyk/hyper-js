@@ -2,6 +2,8 @@ import { defaults } from './defaults.js'
 import { block } from './rules.js'
 import { rtrim, unescapes } from './helpers.js'
 
+import { error } from '@hyper/utils'
+
 function splitCells (tableRow, count) {
   // ensure that every cell-delimiting pipe has a space
   // before it to distinguish it from an escaped pipe
@@ -38,26 +40,15 @@ function splitCells (tableRow, count) {
 /**
  * Block Lexer
  */
-export default class Lexer {
-  constructor (options) {
-    this.tokens = []
-    this.tokens.links = Object.create(null)
-    this.options = options || defaults
-  }
+export default function Lexer (src, options = defaults) {
+  let tokens = []
+  tokens.links = Object.create(null)
 
-  static lex (src, options) {
-    return new Lexer(options).lex(src)
-  }
+  src = src
+    .replace(/\r\n|\r/g, '\n')
+    .replace(/\t/g, '    ')
 
-  lex (src) {
-    src = src
-      .replace(/\r\n|\r/g, '\n')
-      .replace(/\t/g, '    ')
-
-    return this.token(src, true)
-  }
-
-  token (src, top) {
+  function token (src, top) {
     src = src.replace(/^ +$/gm, '')
     let next,
       loose,
@@ -81,56 +72,49 @@ export default class Lexer {
       if (cap = block.newline.exec(src)) {
         src = src.substring(cap[0].length)
         if (cap[0].length > 1) {
-          this.tokens.push({
-            type: 'space'
-          })
+          tokens.push({ type: 'space' })
         }
       }
 
       // code
-      if (cap = block.code.exec(src)) {
-        const lastToken = this.tokens[this.tokens.length - 1]
+      else if (cap = block.code.exec(src)) {
+        const lastToken = tokens[tokens.length - 1]
         src = src.substring(cap[0].length)
         // An indented code block cannot interrupt a paragraph.
         if (lastToken && lastToken.type === 'paragraph') {
           lastToken.text += '\n' + cap[0].trimRight()
         } else {
           cap = cap[0].replace(/^ {4}/gm, '')
-          this.tokens.push({
+          tokens.push({
             type: 'code',
             codeBlockStyle: 'indented',
-            text: !this.options.pedantic
-              ? rtrim(cap, '\n')
-              : cap
+            text: rtrim(cap, '\n')
           })
         }
-        continue
       }
 
       // fences
-      if (cap = block.fences.exec(src)) {
+      else if (cap = block.fences.exec(src)) {
         src = src.substring(cap[0].length)
-        this.tokens.push({
+        tokens.push({
           type: 'code',
           lang: cap[2] ? cap[2].trim() : cap[2],
           text: cap[3] || ''
         })
-        continue
       }
 
       // heading
-      if (cap = block.heading.exec(src)) {
+      else if (cap = block.heading.exec(src)) {
         src = src.substring(cap[0].length)
-        this.tokens.push({
+        tokens.push({
           type: 'heading',
           depth: cap[1].length,
           text: cap[2]
         })
-        continue
       }
 
       // table no leading pipe (gfm)
-      if (cap = block.nptable.exec(src)) {
+      else if (cap = block.nptable.exec(src)) {
         item = {
           type: 'table',
           header: splitCells(cap[1].replace(/^ *| *\| *$/g, '')),
@@ -157,58 +141,49 @@ export default class Lexer {
             item.cells[i] = splitCells(item.cells[i], item.header.length)
           }
 
-          this.tokens.push(item)
-
-          continue
+          tokens.push(item)
+        } else if (DEBUG) {
+          // @Incomplete: should never reach here. test to find out what happens if it does reach.
+          debugger
         }
       }
 
       // hr
-      if (cap = block.hr.exec(src)) {
+      else if (cap = block.hr.exec(src)) {
         src = src.substring(cap[0].length)
-        this.tokens.push({
-          type: 'hr'
-        })
-        continue
+        tokens.push({ type: 'hr' })
       }
 
       // blockquote
-      if (cap = block.blockquote.exec(src)) {
+      else if (cap = block.blockquote.exec(src)) {
         src = src.substring(cap[0].length)
 
-        this.tokens.push({
-          type: 'blockquote_start'
-        })
+        tokens.push({ type: 'blockquote_start' })
 
         cap = cap[0].replace(/^ *> ?/gm, '')
 
         // Pass `top` to keep the current
         // "toplevel" state. This is exactly
         // how markdown.pl works.
-        this.token(cap, top)
+        token(cap, top)
 
-        this.tokens.push({
-          type: 'blockquote_end'
-        })
-
-        continue
+        tokens.push({ type: 'blockquote_end' })
       }
 
       // link
-      if (cap = block.link.exec(src)) {
+      else if (cap = block.link.exec(src)) {
         src = src.substring(cap[0].length)
-        this.tokens.push({
+        tokens.push({
           type: 'link',
           prefix: cap[1] || '',
           text: cap[2],
           href: unescapes(cap[3].trim()),
           title: unescapes(cap[4] && cap[4].slice(1, -1))
         })
-        continue
       }
 
       // list
-      if (cap = block.list.exec(src)) {
+      else if (cap = block.list.exec(src)) {
         src = src.substring(cap[0].length)
         bull = cap[2]
         isordered = bull.length > 1
@@ -220,7 +195,7 @@ export default class Lexer {
           loose: false
         }
 
-        this.tokens.push(listStart)
+        tokens.push(listStart)
 
         // Get each top-level item.
         cap = cap[0].match(block.item)
@@ -242,9 +217,7 @@ export default class Lexer {
           // list item contains. Hacky.
           if (~item.indexOf('\n ')) {
             space -= item.length
-            item = !this.options.pedantic
-              ? item.replace(new RegExp('^ {1,' + space + '}', 'gm'), '')
-              : item.replace(/^ {1,4}/gm, '')
+            item = item.replace(new RegExp('^ {1,' + space + '}', 'gm'), '')
           }
 
           // Determine whether the next list item belongs here.
@@ -252,7 +225,7 @@ export default class Lexer {
           if (i !== l - 1) {
             b = block.bullet.exec(cap[i + 1])[0]
             if (bull.length > 1 ? b.length === 1
-                : (b.length > 1 || (this.options.smartLists && b !== bull))) {
+                : (b.length > 1 || (options.smartLists && b !== bull))) {
               src = cap.slice(i + 1).join('\n') + src
               i = l - 1
             }
@@ -287,12 +260,12 @@ export default class Lexer {
           }
 
           listItems.push(t)
-          this.tokens.push(t)
+          tokens.push(t)
 
           // Recurse.
-          this.token(item, false)
+          token(item, false)
 
-          this.tokens.push({ type: 'list_item_end' })
+          tokens.push({ type: 'list_item_end' })
         }
 
         if (listStart.loose) {
@@ -303,29 +276,24 @@ export default class Lexer {
           }
         }
 
-        this.tokens.push({
-          type: 'list_end'
-        })
-
-        continue
+        tokens.push({ type: 'list_end' })
       }
 
       // def
-      if (top && (cap = block.def.exec(src))) {
+      else if (top && (cap = block.def.exec(src))) {
         src = src.substring(cap[0].length)
         if (cap[3]) cap[3] = cap[3].substring(1, cap[3].length - 1)
         tag = cap[1].toLowerCase().replace(/\s+/g, ' ')
-        if (!this.tokens.links[tag]) {
-          this.tokens.links[tag] = {
+        if (!tokens.links[tag]) {
+          tokens.links[tag] = {
             href: cap[2],
             title: cap[3]
           }
         }
-        continue
       }
 
       // table (gfm)
-      if (cap = block.table.exec(src)) {
+      else if (cap = block.table.exec(src)) {
         item = {
           type: 'table',
           header: splitCells(cap[1].replace(/^ *| *\| *$/g, '')),
@@ -354,51 +322,51 @@ export default class Lexer {
               item.header.length)
           }
 
-          this.tokens.push(item)
-
-          continue
+          tokens.push(item)
+        } else if (DEBUG) {
+          // @Incomplete: should never reach here. test to find out what happens if it does reach.
+          debugger
         }
       }
 
       // lheading
-      if (cap = block.lheading.exec(src)) {
+      else if (cap = block.lheading.exec(src)) {
         src = src.substring(cap[0].length)
-        this.tokens.push({
+        tokens.push({
           type: 'heading',
           depth: cap[2].charAt(0) === '=' ? 1 : 2,
           text: cap[1]
         })
-        continue
       }
 
       // top-level paragraph
-      if (top && (cap = block.paragraph.exec(src))) {
+      else if (top && (cap = block.paragraph.exec(src))) {
         src = src.substring(cap[0].length)
-        this.tokens.push({
+        tokens.push({
           type: 'paragraph',
           text: cap[1].charAt(cap[1].length - 1) === '\n'
             ? cap[1].slice(0, -1)
             : cap[1]
         })
-        continue
       }
 
       // text
-      if (cap = block.text.exec(src)) {
+      else if (cap = block.text.exec(src)) {
         // Top-level should never reach here.
         src = src.substring(cap[0].length)
-        this.tokens.push({
+        tokens.push({
           type: 'text',
           text: cap[0]
         })
-        continue
       }
 
-      if (src) {
-        throw new Error('Infinite loop on byte: ' + src.charCodeAt(0))
+      else if (src) {
+        error('Infinite loop on byte: ' + src.charCodeAt(0))
       }
     }
 
-    return this.tokens
+    return tokens
   }
+
+  return token(src, true)
 }

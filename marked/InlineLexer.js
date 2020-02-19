@@ -13,6 +13,7 @@ let rules = inline.breaks
  * Inline Lexer & Compiler
  */
 export default function InlineLexer (G, links, options = defaults) {
+  // @Optimise: instead of having a renderer, just have a text option, so that it renders text instead.
   options.renderer = options.renderer || new Renderer(G)
   let renderer = options.renderer
   renderer.options = options
@@ -47,8 +48,6 @@ export default function InlineLexer (G, links, options = defaults) {
     }
 
     while (src) {
-      // if (DEBUG && src.startsWith('<!--')) debugger
-
       // escape
       if (cap = rules.escape.exec(src)) {
         src = src.substring(cap[0].length)

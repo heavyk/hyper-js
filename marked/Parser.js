@@ -19,14 +19,14 @@ export default function Parser (G, options = defaults) {
   let next = () => token = tokens.pop()
   let peek = () => tokens[tokens.length - 1] || 0
 
-  function parse (tokens, out = []) {
-    inline_output = InlineLexer(tokens.links, options)
+  function parse (_tokens, out = []) {
+    inline_output = InlineLexer(G, _tokens.links, options)
     // use an InlineLexer with a TextRenderer to extract pure text
-    inline_text_output = InlineLexer(
-      tokens.links,
+    inline_text_output = InlineLexer(G,
+      _tokens.links,
       merge({}, options, { renderer: new TextRenderer() })
     )
-    tokens = tokens.reverse()
+    tokens = _tokens.reverse()
 
     while (next()) {
       out.push(tok())
@@ -45,7 +45,6 @@ export default function Parser (G, options = defaults) {
 
   function tok () {
     let body
-    let token = token
     let type = token.type
     if (type === 'space') {
       return ''

@@ -87,6 +87,7 @@ let services = {
  */
 export default function Renderer (G, options = {}) {
   let { h } = G
+  if (DEBUG && !h) error('make sure you pass in your context')
 
   function link (href, title, text) {
     // debugger
