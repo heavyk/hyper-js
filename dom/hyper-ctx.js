@@ -89,7 +89,7 @@ export function new_ctx (G = global_ctx(), fn, ...args) {
   if (DEBUG && Array.isArray(el)) error('this will assign a context to your element, so wrap these elements in a container element')
   if (DEBUG && !isNode(el) && el != null && !el.then) error('you must return an element when creating a new context')
 
-  if (el.then) {
+  if (el && el.then) {
     el.then(el => EL_CTX.set(el, ctx))
   } else {
     EL_CTX.set(el, ctx)
