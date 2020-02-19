@@ -15,6 +15,7 @@ import { after, next_tick } from '@hyper/utils'
 import { win, doc, customElements } from './dom-base'
 import { isNode, txt, comment, cE, set_style } from './dom-base'
 import { lookup_parent_with_attr } from './dom-base'
+import { Node_prototype } from './dom-base'
 
 // add your own (or utilise this to make your code smaller!)
 export let short_attrs = { s: 'style', c: 'class', for: 'htmlFor' }
@@ -477,9 +478,6 @@ export function make_obv_node (e, v, cleanupFuncs = []) {
   }
   return r
 }
-
-// exported to allow other files to extend the prototype easier
-export const Node_prototype = Node.prototype
 
 // shortcut to append multiple children (w/ cleanupFuncs)
 Node_prototype.iB = function (el, ref, cleanupFuncs) { return this.insertBefore(make_obv_node(this, el, cleanupFuncs), ref) }

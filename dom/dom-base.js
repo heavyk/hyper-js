@@ -9,6 +9,9 @@ export const IS_LOCAL = ~location.host.indexOf('localhost')
 export const base_path = location.pathname
 export const origin = location.protocol + '//' + location.hostname + (location.port ? ':' + location.port : '')
 
+// exported to allow other files to extend the prototype easier
+export const Node_prototype = Node.prototype
+
 // shortcut document creation functions
 export const txt = (t) => doc.createTextNode(t)
 export const comment = (t) => doc.createComment(t)

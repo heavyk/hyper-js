@@ -3,6 +3,7 @@ import { define_getter, define_value } from '@hyper/utils'
 // import { random_id } from '@hyper/utils'
 import { h, s } from '@hyper/dom/hyper-hermes'
 import { doc, getElementById, isNode } from '@hyper/dom/dom-base'
+import { Node_prototype } from '@hyper/dom/dom-base'
 
 // default obv functions provided
 import { value, transform, compute } from '@hyper/dom/observable'
@@ -97,8 +98,6 @@ export function new_ctx (G = global_ctx(), fn, ...args) {
 
   return el
 }
-
-import { Node_prototype } from '@hyper/dom/hyper-hermes'
 
 // shortcut to remove myself from the dom (and cleanup if it's got nodes)
 Node_prototype.rm = function () { return el_cleanup(this), this.remove() }
