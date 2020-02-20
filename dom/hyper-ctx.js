@@ -14,24 +14,34 @@ import { update_obv } from '@hyper/dom/observable-event'
 // since it's the global context, should it be cached somewhere?
 
 export function global_ctx () {
-  // let ctx
   let el = getElementById('global_ctx') || new_ctx({
     _id:0, ERROR: 'THIS IS THE GLOBAL CTX',
     o: {},
     h, s,
-    // base obv functions
-    // @Incomplete: sometime make these optional
+    // @Incomplete: it doesn't save much space. should perhaps the obvs that are not used be optional?
     v: value,
     t: transform,
-    c: compute,
+    // c: compute,
+    c: (obvs, compute_fn, obv) => {
+      obv = compute(obvs, compute_fn)
+      h.z(obv.x)
+      return obv
+    },
     m: update_obv,
     V: obj_value,
-  }, (_ctx) => {
-    // ctx = _ctx
+    z: (fn) => {
+      cleanupFuncs.push(
+        DEBUG && typeof fn !== 'function'
+        ? error('adding a non-function value to cleanupFuncs')
+        : fn
+      )
+      return fn
+    },
+  }, () => {
+    // bind the global ctx to a meta tag in the head called 'global_ctx'
     return doc.head.aC(h('meta#global_ctx'))
   })
   return el_ctx(el)
-  // return ctx || el_ctx(el)
 }
 
 const EL_CTX = new Map()
@@ -68,26 +78,36 @@ export function new_ctx (G = global_ctx(), fn, ...args) {
   let obvs = Object.create(G.o, {})
   let ctx = Object.create(G, {
     _id: define_value(++last_id),
-    // _ns: define_value(name),
-    // _ctx: define_value(sub),
     o: define_value(obvs),
+    z: define_value((fn) => {
+      cleanupFuncs.push(
+        DEBUG && typeof fn !== 'function'
+        ? error('adding a non-function value to cleanupFuncs')
+        : fn
+      )
+      return fn
+    }),
     _h: define_value(null, true),
     _s: define_value(null, true),
     h: define_getter(() => ctx._h || (ctx._h = G.h.context())),
     s: define_getter(() => ctx._s || (ctx._s = G.s.context())),
     cleanupFuncs: define_value(cleanupFuncs),
+    c: define_value((obvs, compute_fn, obv) => {
+      obv = compute(obvs, compute_fn)
+      cleanupFuncs.push(obv.x)
+      return obv
+    }),
     parent: define_value(G),
     cleanup: define_value((f) => {
-      // while (f = sub.pop()) f.cleanup()
       while (f = cleanupFuncs.pop()) f()
-      if (ctx._h) ctx._h.cleanup()
-      if (ctx._s) ctx._s.cleanup()
+      if (f = ctx._h) f.cleanup()
+      if (f = ctx._s) f.cleanup()
     })
   })
 
   let mo, el = fn(ctx, ...args)
 
-  if (DEBUG && Array.isArray(el)) error('this will assign a context to your element, so wrap these elements in a container element')
+  if (DEBUG && Array.isArray(el)) error(`this will assign a context to your element, so an array won't work. instead, wrap these elements in a container element`)
   if (DEBUG && !isNode(el) && el != null && !el.then) error('you must return an element when creating a new context')
 
   if (el && el.then) {

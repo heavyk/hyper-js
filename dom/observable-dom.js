@@ -14,11 +14,12 @@ import { random_id, __debug } from '@hyper/lib/utils'
 
 // a section, really is just an observable that provides a context, then cleans up that context when it's done
 export function section (G, name, fn) {
+  error('not working properly after ctx changes')
   var section_name = typeof name == 'string' ? name : (fn = name, random_id())
   let el = this[section_name] || (this[section_name] = value())
   if (typeof fn === 'function') {
     let local_ctx = get_context(section_name + '_ctx')
-    G.h.cleanupFuncs.push(() => { local_ctx.cleanup() })
+    G.z(() => local_ctx.cleanup())
     el(fn.call(this, local_ctx))
   } else {
     el(comment('SECTION:' + name))
@@ -29,11 +30,12 @@ export function section (G, name, fn) {
 }
 
 function get_context (G, el) {
+  error('not implemented')
   var ctx =
     typeof el === 'object' ? (el_ctx(el) || el._G = new_ctx(G)) :
     typeof el === 'string' ? G._ctx[el] ||
   // if (typeof el !== 'string') el = el_ctx(el)
   // return
   // this[ns] || (this[ns] = ctx = new_ctx({h, s}),
-  //   h.cleanupFuncs.push(() => { ctx.cleanup() }), ctx) // return the ctx, not the return value of push
+  //   h.x.push(() => { ctx.cleanup() }), ctx) // return the ctx, not the return value of push
 }

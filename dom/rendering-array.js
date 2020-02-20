@@ -21,7 +21,7 @@ export default class RenderingArray extends ObservableArray {
     self.G = G
     self.d = data instanceof ObservableArray ? data : new ObservableArray() && DEBUG && error('data must be a ObservableArray')
     // this should have cleanupFuncs in the context (which adds h/s cleanup to the list when it makes the context)
-    G.cleanupFuncs.push(() => { self.cleanup() })
+    G.z(() => { self.cleanup() })
 
     // where we store the id/data which gets passed to the rendering function
     self._d = []

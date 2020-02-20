@@ -85,7 +85,7 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
     }
   })(frame.cleanup)
 
-  G.cleanupFuncs.push(frame.cleanup)
+  G.z(frame.cleanup)
 
   // DEPRECATED!! - I don't like this at all!!
   // we're going to go with a new way of setting and getting
@@ -160,7 +160,7 @@ function pluginBoilerplate (frame, parentNode, _config, _data, DEFAULT_CONFIG, _
           })
         })
 
-        G.cleanupFuncs.push(() => resize.detach())
+        G.z(() => resize.detach())
       })
     }
 

@@ -195,7 +195,7 @@ export function compute (obvs, compute_fn) {
   obv._obv = 'value'
   if (DEBUG) obv.gc = () => compactor(listeners)
   if (DEBUG) define_prop(obv, 'listeners', { get: obv.gc })
-  obv.cleanup = () => { for (fn of removables) fn() }
+  obv.x = () => { for (fn of removables) fn() }
 
   obv.v = compute_fn.apply(null, obv_vals)
   is_init = false

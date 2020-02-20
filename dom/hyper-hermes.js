@@ -116,7 +116,15 @@ function hyper_hermes (create_element) {
     return e
   }
 
-  h.cleanupFuncs = cleanupFuncs
+  h.x = cleanupFuncs
+  h.z = (fn) => {
+    cleanupFuncs.push(
+      DEBUG && typeof fn !== 'function'
+      ? error('adding a non-function value to cleanupFuncs')
+      : fn
+    )
+    return fn
+  }
   h.cleanup = () => {
     for (let i = 0; i < cleanupFuncs.length; i++) {
       cleanupFuncs[i]()
@@ -416,7 +424,7 @@ export function new_dom_context (no_cleanup) {
       : new (customElements.get(el))
   })
 
-  if (!no_cleanup) h.cleanupFuncs.push(() => ctx.cleanup())
+  if (!no_cleanup) h.z(() => ctx.cleanup())
   ctx.context = new_dom_context
   return ctx
 }
@@ -425,7 +433,7 @@ export var s = new_svg_context(1)
 export function new_svg_context (no_cleanup) {
   var ctx = hyper_hermes((el) => doc.createElementNS('http://www.w3.org/2000/svg', el))
 
-  if (!no_cleanup) s.cleanupFuncs.push(() => ctx.cleanup())
+  if (!no_cleanup) s.z(() => ctx.cleanup())
   ctx.context = new_svg_context
   return ctx
 }
