@@ -75,6 +75,10 @@ export function flatten (array) {
   return res
 }
 
+export function ensure_array (value) {
+  return Array.isArray(value) ? value : [value]
+}
+
 // unique array values using Set.
 export function uniq (array) {
   return Array.from(new Set(array).values())
